@@ -94,19 +94,16 @@ async def ask_transaction_id(callback: CallbackQuery, state: FSMContext):
 
 @router.message(TransactionSearchState.waiting_for_transaction_id)
 async def find_transaction_by_id(message: Message, state: FSMContext):
-  # Agar order_id raqam bo'lmasa (yoki matn bo'lsa), shunga moslab tekshirasiz
-  # Agar t.order_id raqam bo'lsa:
-  
+  trans_id = message.text.strip()  # Matnligicha qabul qilamiz
 
-  trans_id = message.text
-
+  # Bazadan Transaction jadvalidan order_id bo'yicha qidiramiz
   tranzaksiya = session.query(Transaction).filter_by(order_id=trans_id).first()
 
   if tranzaksiya:
     matn = (
         f"✅ <b>To'lov topildi:</b>\n\n"
         f"🆔 <b>ID (Order ID):</b> {tranzaksiya.order_id}\n"
-        f"💰 <b>Summa:</b> {tranzaksia.summa if 'sumr' else tranzaksiya.summa}\n"
+        f"💰 <b>Summa:</b> {tranzaksiya.summa}\n"
         f"📊 <b>Status (Holat):</b> {tranzaksiya.holat}\n"
         f"⏳ <b>Vaqti:</b> {tranzaksiya.vaqti}\n"
         f"👤 <b>Telegram ID (Owner):</b> {tranzaksiya.telegram_id}"
@@ -116,8 +113,6 @@ async def find_transaction_by_id(message: Message, state: FSMContext):
 
   await message.answer(matn, parse_mode="HTML")
   await state.clear()
-
-
 
 @router.message(F.text == 'Foydalanuvchilar')
 async def foydalanuvchilar(message: Message):
