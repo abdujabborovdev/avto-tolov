@@ -2,4 +2,4 @@ aiogram
 aiohttp
 aiofiles
 sqlalchemy
-python-dotenv~=1.2.3
+python-dotenv
