@@ -3,6 +3,7 @@ from sqlalchemy import String, create_engine,Column,Integer, BigInteger
 from datetime import datetime
 from sqlalchemy import Column, String, BigInteger, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from data.config import *
 class Base(DeclarativeBase):
     pass
 
@@ -44,7 +45,7 @@ class Order_numbers(Base):
 
 
 
-engine = create_engine("sqlite:///database.db")
+engine = create_engine(DB_KEY)
 
 
 Base.metadata.create_all(engine)
