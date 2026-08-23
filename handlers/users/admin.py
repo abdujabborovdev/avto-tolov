@@ -62,14 +62,70 @@ async def tarix_t(message:Message):
             matn += f"ID: {t.order_id} | Summa: {t.summa} | Status: {t.holat} | Vaqti {t.vaqti} | Owner : {t.telegram_id}\n"
 
         await message.answer(matn, parse_mode='HTML')
-@router.message(F.text=='Foydalanuvchilar')
-async def foydalanuvchilar(message:Message):
-    if message.from_user.id in ADMINS:
-        foy = session.query(User).all()
-        matn = f"<b>👥 Foydalanuvchilar ro'yxati:</b>\n\n"
-        for u in foy:
-            matn += f"ID: {u.id}| Username: {u.username} | Ism: {u.name} | Balans: {u.hisob} so'm\n"
-        await message.answer(matn, parse_mode='HTML')
+from aiogram.fsm.context import FSMContext
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
+from utils.db_api.create_user import User, session  # o'zingizning importlar
+
+
+@router.message(F.text == 'Foydalanuvchilar')
+async def foydalanuvchilar(message: Message):
+  if message.from_user.id in ADMINS:
+    # Jami foydalanuvchilar sonini sanaymiz
+    user_count = session.query(User).count()
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[[
+            InlineKeyboardButton(
+                text='🔍 ID orqali qidirish', callback_data='search_user'
+            )
+        ]]
+    )
+
+    await message.answer(
+        f'👥 <b>Jami foydalanuvchilar soni:</b> {user_count} ta',
+        reply_markup=keyboard,
+        parse_mode='HTML',
+    )
+
+
+@router.callback_query(F.data == 'search_user')
+async def ask_user_id(callback: CallbackQuery, state: FSMContext):
+  await callback.message.answer(
+      "Qidirmoqchi bo'lgan foydalanuvchining <b>ID</b> raqamini kiriting:",
+      parse_mode='HTML',
+  )
+  await state.set_state(AdminSearchState.waiting_for_user_id)
+  await callback.answer()
+
+
+@router.message(AdminSearchState.waiting_for_user_id)
+async def find_user_by_id(message: Message, state: FSMContext):
+  if not message.text.isdigit():
+    await message.answer('❌ Iltimos, faqat raqamlardan iborat ID kiriting!')
+    return
+
+  user_id = int(message.text)
+
+  user = session.query(User).filter_by(id=user_id).first()
+
+  if user:
+    matn = (
+        f'✅ <b>Foydalanuvchi topildi:</b>\n\n'
+        f'🆔 <b>ID:</b> {user.id}\n'
+        f'👤 <b>Username:</b> @{user.username}\n'
+        f'🪪 <b>Ism:</b> {user.name}\n'
+        f'💳 <b>Balans:</b> {user.hisob} so\'m'
+    )
+  else:
+    matn = f"❌ <b>{user_id}</b> ID raqamli foydalanuvchi topilmadi."
+
+  await message.answer(matn, parse_mode='HTML')
+  await state.clear()  # Holatni tozalaymiz
 
 @router.message(F.text=='Nomerlar royhati')
 async def foydalanuvchilar(message:Message):
