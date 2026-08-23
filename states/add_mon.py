@@ -11,3 +11,6 @@ class AdminSearchState(StatesGroup):
 
 class NumberSearchState(StatesGroup):
   waiting_for_number_id = State()
+
+class TransactionSearchState(StatesGroup):
+  waiting_for_transaction_id = State()
