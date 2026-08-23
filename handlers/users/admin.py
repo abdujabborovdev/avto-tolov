@@ -96,11 +96,9 @@ async def ask_transaction_id(callback: CallbackQuery, state: FSMContext):
 async def find_transaction_by_id(message: Message, state: FSMContext):
   # Agar order_id raqam bo'lmasa (yoki matn bo'lsa), shunga moslab tekshirasiz
   # Agar t.order_id raqam bo'lsa:
-  if not message.text.isdigit():
-    await message.answer("❌ Iltimos, faqat raqamlardan iborat ID kiriting!")
-    return
+  
 
-  trans_id = int(message.text)
+  trans_id = message.text
 
   tranzaksiya = session.query(Transaction).filter_by(order_id=trans_id).first()
 
