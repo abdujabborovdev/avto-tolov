@@ -7,3 +7,7 @@ class Suma_qosh(StatesGroup):
 
 class AdminSearchState(StatesGroup):
   waiting_for_user_id = State()
+
+
+class NumberSearchState(StatesGroup):
+  waiting_for_number_id = State()
