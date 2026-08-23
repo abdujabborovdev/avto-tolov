@@ -60,7 +60,7 @@ async def yangilash(message:Message):
 
 
 
-@router.message(F.text == 'Tola' or F.text == "To'lovlar tarixi")
+@router.message(F.text == "Tolovlar tarixi")
 async def tarix_t(message: Message):
   if message.from_user.id in ADMINS:
     # Jami to'lovlar sonini sanaymiz
