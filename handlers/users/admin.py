@@ -9,8 +9,9 @@ from data.config import *
 from keyboards.default.admin import admin_k
 from utils.db_api.create_user import Numbers_list, session, Transaction, User, Order_numbers
 import aiohttp
-from states.add_mon import Suma_qosh, AdminSearchState,NumberSearchState
+from states.add_mon import Suma_qosh, AdminSearchState,NumberSearchState, TransactionSearchState
 from aiogram.fsm.context import FSMContext
+
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
@@ -59,22 +60,65 @@ async def yangilash(message:Message):
 
 
 
-@router.message(F.text == 'Tolovlar tarixi')
-async def tarix_t(message:Message):
-    if message.from_user.id in ADMINS:
-        tarix = session.query(Transaction).all()
-        matn = "<b>💳 To'lovlar tarixi:</b>\n\n"
-        for t in tarix:
-            matn += f"ID: {t.order_id} | Summa: {t.summa} | Status: {t.holat} | Vaqti {t.vaqti} | Owner : {t.telegram_id}\n"
+@router.message(F.text == 'Tola' or F.text == "To'lovlar tarixi")
+async def tarix_t(message: Message):
+  if message.from_user.id in ADMINS:
+    # Jami to'lovlar sonini sanaymiz
+    total_transactions = session.query(Transaction).count()
 
-        await message.answer(matn, parse_mode='HTML')
-from aiogram.fsm.context import FSMContext
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-)
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[[
+            InlineKeyboardButton(
+                text="🔍 Tranzaksiya ID orqali qidirish",
+                callback_data="search_transaction",
+            )
+        ]]
+    )
+
+    await message.answer(
+        f"💳 <b>Jami to'lovlar tarixi soni:</b> {total_transactions} ta",
+        reply_markup=keyboard,
+        parse_mode="HTML",
+    )
+
+
+@router.callback_query(F.data == "search_transaction")
+async def ask_transaction_id(callback: CallbackQuery, state: FSMContext):
+  await callback.message.answer(
+      "Qidirmoqchi bo'lgan to'lovning <b>ID</b> (order_id) raqamini kiriting:",
+      parse_mode="HTML",
+  )
+  await state.set_state(TransactionSearchState.waiting_for_transaction_id)
+  await callback.answer()
+
+
+@router.message(TransactionSearchState.waiting_for_transaction_id)
+async def find_transaction_by_id(message: Message, state: FSMContext):
+  # Agar order_id raqam bo'lmasa (yoki matn bo'lsa), shunga moslab tekshirasiz
+  # Agar t.order_id raqam bo'lsa:
+  if not message.text.isdigit():
+    await message.answer("❌ Iltimos, faqat raqamlardan iborat ID kiriting!")
+    return
+
+  trans_id = int(message.text)
+
+  tranzaksiya = session.query(Transaction).filter_by(order_id=trans_id).first()
+
+  if tranzaksiya:
+    matn = (
+        f"✅ <b>To'lov topildi:</b>\n\n"
+        f"🆔 <b>ID (Order ID):</b> {tranzaksiya.order_id}\n"
+        f"💰 <b>Summa:</b> {tranzaksia.summa if 'sumr' else tranzaksiya.summa}\n"
+        f"📊 <b>Status (Holat):</b> {tranzaksiya.holat}\n"
+        f"⏳ <b>Vaqti:</b> {tranzaksiya.vaqti}\n"
+        f"👤 <b>Telegram ID (Owner):</b> {tranzaksiya.telegram_id}"
+    )
+  else:
+    matn = f"❌ <b>{trans_id}</b> ID raqamli to'lov topilmadi."
+
+  await message.answer(matn, parse_mode="HTML")
+  await state.clear()
+
 
 
 @router.message(F.text == 'Foydalanuvchilar')
