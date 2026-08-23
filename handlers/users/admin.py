@@ -10,6 +10,13 @@ from keyboards.default.admin import admin_k
 from utils.db_api.create_user import Numbers_list, session, Transaction, User, Order_numbers
 import aiohttp
 from states.add_mon import Suma_qosh, AdminSearchState
+from aiogram.fsm.context import FSMContext
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 router = Router()
 
 SEENSMS_KEY=SEENSMS_KEY
@@ -68,7 +75,6 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     Message,
 )
-from utils.db_api.create_user import User, session  # o'zingizning importlar
 
 
 @router.message(F.text == 'Foydalanuvchilar')
@@ -136,18 +142,65 @@ async def foydalanuvchilar(message:Message):
             matn += f"ID: {u.id}| {u.country} | {u.price}\n"
         await message.answer(matn, parse_mode='HTML')
 
-@router.message(F.text=='Nomerlar tarixi')
-async def foydalanuvchilar(message:Message):
-    if message.from_user.id in ADMINS:
-        royhat = session.query(Order_numbers).all()
-        matn = f"<b>Ro'yxati:</b>\n\n"
+@router.message(F.text == 'Nomerlar tarixi')
+async def nomerlar_tarixi(message: Message):
+  if message.from_user.id in ADMINS:
+    # Jami nomerlar sonini sanaymiz
+    total_numbers = session.query(Order_numbers).count()
 
-        for u in royhat:
-            matn += f" {u.id}|{u.country} | {u.price} | {u.owner_number}, | {u.number}, | {u.status}, | {u.kod} | {u.pas2}\n"
-        await message.answer(matn, parse_mode='HTML')
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[[
+            InlineKeyboardButton(
+                text='🔍 Nomer ID orqali qidirish', callback_data='search_number'
+            )
+        ]]
+    )
+
+    await message.answer(
+        f'📦 <b>Jami sotib olingan/tarixdagi nomerlar soni:</b> {total_numbers} ta',
+        reply_markup=keyboard,
+        parse_mode='HTML',
+    )
 
 
+@router.callback_query(F.data == 'search_number')
+async def ask_number_id(callback: CallbackQuery, state: FSMContext):
+  await callback.message.answer(
+      "Qidirmoqchi bo'lgan nomerning <b>ID</b> raqamini kiriting:",
+      parse_mode='HTML',
+  )
+  await state.set_state(NumberSearchState.waiting_for_number_id)
+  await callback.answer()
 
+
+# 3. Kiritilgan ID bo'yicha bazadan qidirib topib berish
+@router.message(NumberSearchState.waiting_for_number_id)
+async def find_number_by_id(message: Message, state: FSMContext):
+  if not message.text.isdigit():
+    await message.answer('❌ Iltimos, faqat raqamlardan iborat ID kiriting!')
+    return
+
+  num_id = int(message.text)
+
+  item = session.query(Order_numbers).filter_by(id=num_id).first()
+
+  if item:
+    matn = (
+        f'✅ <b>Nomer topildi:</b>\n\n'
+        f'🆔 <b>ID:</b> {item.id}\n'
+        f'🌍 <b>Davlat (Country):</b> {item.country}\n'
+        f'💰 <b>Narxi (Price):</b> {item.price}\n'
+        f'👤 <b>Egasi (Owner):</b> {item.owner_number}\n'
+        f'📞 <b>Nomer:</b> {item.number}\n'
+        f'📊 <b>Status:</b> {item.status}\n'
+        f'🔑 <b>Kod:</b> {item.code}\n'
+        f'🛡 <b>Parol 2:</b> {item.pas2}'
+    )
+  else:
+    matn = f"❌ <b>{num_id}</b> ID raqamli nomer topilmadi."
+
+  await message.answer(matn, parse_mode='HTML')
+  await state.clear()  # Holatni tozalaymiz
 @router.message(F.text=='Hisobiga qoshish')
 async def foydalanuvchilar(message:Message,state:FSMContext):
     if message.from_user.id in ADMINS:
