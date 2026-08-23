@@ -13,6 +13,10 @@ ADMINS = [admin.strip() for admin in (os.getenv("ADMINS") or "").split(",") if a
 IP = os.getenv("ip", "localhost")
 INPAY_ID = os.getenv("INPAY_ID")
 INPAY_TOKEN = os.getenv("INPAY_TOKEN")
-
+SEENSMS_KEY = os.getenv('SEENSMS_KEY')
+if isinstance(ADMINS, (list, tuple)):
+    ADMINS = [int(i) for i in ADMINS]
+else:
+    ADMINS = [int(ADMINS)]
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN .env faylida topilmadi")

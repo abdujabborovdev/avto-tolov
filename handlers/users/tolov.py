@@ -1,12 +1,10 @@
 from aiogram import Router, F
-from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 import time
 from utils.db_api.create_user import *
-import requests
+import aiohttp
 from states.tolov_qilish import Tolov_qilish
-import data
 from keyboards.inline.tolov import *
 from data.config import INPAY_TOKEN, INPAY_ID
 
@@ -21,18 +19,18 @@ async def cached_bearer():
     yigirma_soat = 20 * 3600
 
     if not _cached_bearer or (hozirgi - _cashed_time) >= yigirma_soat:
-        r = requests.get(
+        async with aiohttp.ClientSession() as sess:
+            async with sess.post(
             "https://inpay.uz/api/v1/authorization/",
             params={"merchant_id": INPAY_ID, "merchant_token": INPAY_TOKEN},
             headers={"Accept": "application/json"},
             timeout=10,
-        )
-
-        data = r.json()
+        ) as r:
+             data = await r.json()
         if not data.get("success"):
             raise RuntimeError(f"Auth xatosi: {data}")
 
-        _cached_bearer = data["bearer_token"]
+        _cached_bearer = data.get("bearer_token")
         _cashed_time = hozirgi  # <-- Xatolik to'g'irlandi (_time_token emas, _cashed_time)
 
     return _cached_bearer
@@ -41,23 +39,25 @@ async def cached_bearer():
 @router.callback_query(F.data == "tolov_qilish")
 async def callback(message: CallbackQuery, state: FSMContext):
     await state.set_state(Tolov_qilish.summa)
-    await message.message.answer("Qanchaga hisobingizni toldirmoqchisiz? Matn ko'rinishida yuboring")
+    await message.message.edit_text(f"""<b>💵 Balansizni necha so'mga to'ldirmoqchisiz? 
+📰 Minimal miqdor: 1 000 so'm</b>""",parse_mode='HTML')
 
 
 @router.message(Tolov_qilish.summa)
 async def summa(message: Message, state: FSMContext):
     try:
         user_summa = int(message.text)
+        if user_summa<1000:
+            await message.answer("""⚠️ To'lov miqdori minimaldan kam, minimal 1000 so'm kirita olasiz""")
+            return
         await state.update_data(summa=user_summa)
     except ValueError:
         await message.answer("⚠️ Xatolik: Iltimos, faqat raqam ko'rinishida kiriting (masalan: 10000)")
-        return  # <-- RETURN qo'shildi: agar xato bo'lsa, kod pastga tushib ketmaydi!
+        return
 
     data = await state.get_data()
     summa = data.get("summa")
     await state.clear()
-
-    await message.answer(f"Kiritilgan summa: {summa} so'm qabul qilindi. To'lov havolasi yaratilmoqda...")
 
     bearer_token = await cached_bearer()
     payload = {
@@ -67,20 +67,30 @@ async def summa(message: Message, state: FSMContext):
         "description": f"{message.from_user.id}",
     }
 
-    r = requests.post(
+    async with aiohttp.ClientSession() as sess:
+        async with sess.post(
         "https://inpay.uz/api/v1/create/",
         json=payload,
         headers={"Authorization": f"Bearer {bearer_token}"},
         timeout=15,
-    )
-
-    data = r.json()
-    url = data['pay_url']
-    tolov_id = data['order_id']
+    ) as r:
+         data = await r.json()
+    url = data.get('pay_url')
+    tolov_id = data.get('order_id')
     telegram_id = message.from_user.id
 
     keyboard_tolov = get_payment_keyboard(pay_url=url, order_id=tolov_id, telegram_id=telegram_id, summasi=summa)
-    await message.answer(f"Buyurtma raqami: {data['order_id']}", reply_markup=keyboard_tolov)
+
+    await message.answer(f"""⚠️ To'lov to'langandan keyin <b>✅ To'lov qildim</b> tugmasini bosing, bot balansiga avtomatik tashlab beriladi. 
+
+<b>💳 To'lov midori:</b> {summa} so'm
+
+<b>Buyurtma raqami:</b> <code>{tolov_id}</code>
+
+<b>Xatolik roy bersa:</b> @itredr""", reply_markup=keyboard_tolov,parse_mode='HTML')
+    new_order_pay = Transaction(order_id=tolov_id,telegram_id=telegram_id,summa=summa)
+    session.add(new_order_pay)
+    session.commit()
 
 
 @router.callback_query(F.data.startswith("check_pay"))
@@ -89,7 +99,7 @@ async def check_pay(call: CallbackQuery):
 
     data_parts = call.data.split(":")
     if len(data_parts) < 4:
-        await call.message.answer("⚠️ Xatolik: Ma'lumotlar yetarli emas.")
+        await call.message.answer("⚠️ Xatolik: Ma'lumotlar yetarli emas.\n\n<b>Xatolik roy bersa:</b> @itredr",parse_mode='HTML')
         return
 
     order_id = data_parts[1]
@@ -97,30 +107,33 @@ async def check_pay(call: CallbackQuery):
     summa = int(data_parts[3])
 
     if not order_id:
-        await call.message.answer("⚠️ Order ID topilmadi.")
+        await call.message.answer("❌ Order ID topilmadi.\n\n<b>Xatolik roy bersa:</b> @itredr",parse_mode='HTML')
         return
 
     url = f"https://inpay.uz/api/v1/transactions/?order_id={order_id}"
     headers = {"Accept": "application/json"}
 
-    response = requests.get(url, headers=headers)
-    data = response.json()
+    async with aiohttp.ClientSession() as sess:
+        async with sess.post(url,
+            headers=headers) as response:
+                                data = await response.json()
 
     try:
         status = data.get("data", {}).get("status") or data.get("status", "pending")
     except Exception:
         status = "pending"
+    try:
+        tranzaksiya = session.query(Transaction).filter(Transaction.order_id == order_id).first()
 
-    tranzaksiya = session.get(Transaction, order_id)
 
-    if tranzaksiya:
         if tranzaksiya.holat == "success":
-            await call.message.answer("⚠️ Bu to'lov allaqachon muvaffaqiyatli o'tgan!")
+            await call.message.answer("✅ Bu to'lov muvaffaqiyatli amalga oshirilgan!\n\n<b>Xatolik roy bersa:</b> @itredr",parse_mode='HTML')
             return
 
         tranzaksiya.holat = status
         session.commit()
-    else:
+
+    except:
         tranzaksiya = Transaction(
             order_id=order_id,
             telegram_id=telegram_id,
@@ -135,20 +148,28 @@ async def check_pay(call: CallbackQuery):
         if user:
             current_hisob = int(user.hisob) if user.hisob else 0
             user.hisob = current_hisob + summa
-            session.commit()
 
-            await call.message.answer(f"✅ To'lov muvaffaqiyatli tasdiqlandi! {summa} so'm hisobingizga qo'shildi.")
+            tranzaksiya.holat='success'
+            await call.message.edit_text(f"✅ To'lov muvaffaqiyatli tasdiqlandi! {summa} so'm hisobingizga qo'shildi.")
             await call.message.edit_reply_markup(reply_markup=None)
         else:
-            await call.message.answer("⚠️ Foydalanuvchi bazadan topilmadi.")
+            await call.message.answer("⚠️ Siz bazadan topilmadimgiz.\n\n<b>Xatolik roy bersa:</b> @itredr",parse_mode='HTML')
 
     elif status == "pending":
-        await call.message.answer("⏳ To'lov hali amalga oshirilmagan (Kutilmoqda).")
+        tranzaksiya.holat = 'pending'
+        await call.answer("⏳ To'lov hali amalga oshirilmagan (Kutilmoqda).",show_alert=False)
     elif status == "failed":
-        await call.message.answer("❌ To'lov muvaffaqiyatsiz yakunlandi.")
+        tranzaksiya.holat = 'failed'
+
+        await call.answer("❌ To'lov muvaffaqiyatsiz yakunlandi.\n\n<b>Xatolik roy bersa:</b> @itredr",parse_mode='HTML',show_alert=False)
     elif status == "cancelled":
-        await call.message.answer("🚫 To'lov bekor qilindi.")
+        tranzaksiya.holat = 'cancelled'
+
+        await call.answer("🚫 To'lov bekor qilindi.\n\n<b>Xatolik roy bersa:</b> @itredr",parse_mode='HTML',show_alert=False)
     else:
-        await call.message.answer(f"ℹ️ To'lov holati: {status}")
+        tranzaksiya.holat = 'None'
+
+        await call.answer(f"ℹ️ To'lov holati: {status}\n\n<b>Xatolik roy bersa:</b> @itredr",parse_mode='HTML',show_alert=False)
+    session.commit()
 
 

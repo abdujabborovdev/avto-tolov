@@ -1,12 +1,9 @@
-from utils.db_api.create_user import *
-all_users = session.query(User).all()
+import requests
 
-# Hamma tranzaksiyalarni olish
-all_transactions = session.query(Transaction).all()
+URL = 'https://seensms.uz/api/v1'
 
-# Foydalanish:
-for user in all_users:
-    print(user.id, user.name, user.hisob)
-
-for tx in all_transactions:
-    print(tx.order_id, tx.telegram_id, tx.summa, tx.holat)
+r = requests.post(URL, data={
+    'key':'TOwvqejSqTUCzmIrN8f6jCFC10Z5wIpR', 'action':'cancel',
+    'order':734580
+})
+print(r.json())
