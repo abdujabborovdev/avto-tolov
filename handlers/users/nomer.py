@@ -1,11 +1,9 @@
-from idlelib import rpc
-
 from aiogram import Router, F
 from keyboards.inline.nomer import *
 from aiogram.types import Message, CallbackQuery
 from data.config import *
 import aiohttp
-
+from data.config import ADMINS
 from keyboards.inline.tolov import tolov_qilish
 from utils.db_api.create_user import session, User, Transaction, Numbers_list, Order_numbers
 
@@ -15,9 +13,9 @@ URL = 'https://seensms.uz/api/v1'
 SEENSMS_KEY = SEENSMS_KEY
 
 
-@router.callback_query(
-    F.data.startswith("country:"))
-async def nomer(call: CallbackQuery, ):
+# 1. DAVLAT DETALLARI (Ismi nomer_detail_handler qilindi)
+@router.callback_query(F.data.startswith("country:"))
+async def nomer_detail_handler(call: CallbackQuery):
     data_name = call.data.split(':')
     country_name = data_name[1]
     Number = session.query(Numbers_list).filter(Numbers_list.country == country_name).first()
@@ -30,8 +28,9 @@ async def nomer(call: CallbackQuery, ):
 <b> Tasdiqlash ✅</b> tugmasini bosing !""", parse_mode='HTML', reply_markup=keyboar)
 
 
+# 2. RAQAM SOTIB OLISH (Ismi buy_number_handler qilindi)
 @router.callback_query(F.data.startswith("buy_number:"))
-async def nomer(call: CallbackQuery):
+async def buy_number_handler(call: CallbackQuery):
     data_name = call.data.split(':')
     country_name = data_name[1]
     price = int(data_name[2])
@@ -51,11 +50,9 @@ async def nomer(call: CallbackQuery):
         await call.answer("❌ Mablag'ingiz yetarli emas!", show_alert=True)
         return
 
-
     await call.message.edit_text("⏳ Raqam qidirilmoqda, iltimos kuting...")
 
     try:
-        # API'dan raqam so'raladi (bu yer biroz vaqt olishi mumkin)
         async with aiohttp.ClientSession() as sess:
             async with sess.post(URL, data={
                 'key': f'{SEENSMS_KEY}',
@@ -68,18 +65,15 @@ async def nomer(call: CallbackQuery):
         return
 
     if isinstance(dat, dict) and dat.get('number'):
-
-        # 4-HIMOYA: API javob qaytarguncha o'tgan vaqt ichida balans o'zgarib ketgan bo'lishi
-        # mumkinligini tekshirish uchun bazani qaytadan yangilab tekshiramiz (`session.refresh`)
         session.refresh(user)
-        current_hisob = int(user.hisob) if user.hisob and str(user.hisob).lstrip('-').isdigit() else 0
+        current_hisob = int(user.hisob) if user.hisob is not None else 0
 
-        # Agar puli yetmay qolgan bo'lsa to'xtatamiz
         if current_hisob < price:
             await call.message.edit_text("❌ Xatolik: Mablag'ingiz yetarli emas!")
             return
 
-        user.hisob = str(current_hisob - price)
+        # str() olib tashlandi, to'g'ridan-to'g'ri Integer sifatida ayirilyapti
+        user.hisob = current_hisob - price
 
         num_id = int(dat.get('id'))
         num_country = dat.get('country')
@@ -92,9 +86,23 @@ async def nomer(call: CallbackQuery):
             number=number
         )
         session.add(new_number_order)
-        session.commit()  # O'zgarishlar bazaga yoziladi
+        session.commit()
 
         keyboard = check_number(num_id)
+        for admin_id in ADMINS:
+            try:
+                await call.bot.send_message(
+                    admin_id,
+                    f"🔔 <b>Yangi raqam sotib olindi!</b>\n\n"
+                    f"👤 Xaridor ID: <code>{tg_id}</code>\n"
+                    f"🌍 Davlat: {num_country}\n"
+                    f"📞 Nomer: <code>{number}</code>\n"
+                    f"🆔 ID: {num_id}",
+                    parse_mode="HTML"
+                )
+            except Exception:
+                pass
+
         await call.message.edit_text(
             f"""✅ Muvaffaqiyatli raqam olindi!\n\n<b>Nomer:</b> {number} \n<b>id:</b> {num_id}""",
             parse_mode='HTML',
@@ -104,6 +112,7 @@ async def nomer(call: CallbackQuery):
         error_msg = dat.get('message', "Hozirda bu davlatda bo'sh raqamlar yo'q!") if isinstance(dat,
                                                                                                  dict) else "Noma'lum xatolik"
         await call.message.edit_text(f"❌ Raqam berilmadi.\nSabab: {error_msg}")
+
 
 @router.callback_query(F.data.startswith('check_number:'))
 async def check_num(call: CallbackQuery):
@@ -126,7 +135,6 @@ async def check_num(call: CallbackQuery):
     if isinstance(dat, dict) and dat.get('status'):
         if dat.get('status') == 'OK':
             kodi = int(dat.get('code'))
-            pas2 = dat.get('password')
             number_order.status = 'OK'
             number_order.kod = kodi
             number_order.pas2 = dat.get('password')

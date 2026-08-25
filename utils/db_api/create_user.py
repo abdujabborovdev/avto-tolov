@@ -12,7 +12,7 @@ class User(Base):
 
   # ID ustuni
   id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-  hisob: Mapped[int] = mapped_column(String(255), nullable=True,default=0)
+  hisob: Mapped[int] = mapped_column(Integer, nullable=True,default=0)
   username: Mapped[str] = mapped_column(String(115), nullable=True)
   name: Mapped[str] = mapped_column(String(255), nullable=False)
 
