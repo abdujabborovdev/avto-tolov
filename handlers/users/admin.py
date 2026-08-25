@@ -254,13 +254,16 @@ async def foydalanuvchilar(message:Message,state:FSMContext):
 
 @router.message(Suma_qosh.summa)
 async def foydalanuvchilar(message: Message, state: FSMContext):
-    suma = message.text
-    if not suma.isdigit():
-        await message.answer("❌ Iltimos, faqat raqam kiriting!")
-        return
+    text = message.text.strip()
 
-    suma = int(suma)
-    await state.update_data(summa=suma)
+    # Manfiy (-) yoki musbat raqam kiritilganini tekshiramiz
+    try:
+        suma = int(text)
+    except ValueError:
+        await message.answer(
+            "❌ Iltimos, faqat raqam kiriting!\n(Masalan, qo'shish uchun: <b>5000</b>, ayirish uchun: <b>-5000</b>)",
+            parse_mode="HTML")
+        return
 
     data = await state.get_data()
     user_id = data.get("tg_idsi")
@@ -271,9 +274,24 @@ async def foydalanuvchilar(message: Message, state: FSMContext):
         await state.clear()
         return
 
-    current_hisob = int(user.hisob) if user.hisob and str(user.hisob).isdigit() else 0
-    user.hisob = str(current_hisob + suma)
+    # Joriy balansni xavfsiz o'qib olamiz
+    try:
+        current_hisob = int(user.hisob) if user.hisob is not None else 0
+    except (ValueError, TypeError):
+        current_hisob = 0
+
+    # Qiymatni qo'shish yoki ayirish (suma minus bo'lsa o'zi ayirib ketadi)
+    user.hisob = current_hisob + suma
     session.commit()
 
-    await message.answer(f"✅ Muvaffaqiyatli! Foydalanuvchi hisobiga {suma} qo'shildi.")
+    # Natijani xabarda chiroyli qilib chiqaramiz
+    if suma < 0:
+        await message.answer(
+            f"✅ Muvaffaqiyatli! Foydalanuvchi hisobidan <b>{abs(suma)}</b> so'm ayrildi.\n💳 Yangi balans: <b>{user.hisob}</b> so'm",
+            parse_mode="HTML")
+    else:
+        await message.answer(
+            f"✅ Muvaffaqiyatli! Foydalanuvchi hisobiga <b>{suma}</b> so'm qo'shildi.\n💳 Yangi balans: <b>{user.hisob}</b> so'm",
+            parse_mode="HTML")
+
     await state.clear()
