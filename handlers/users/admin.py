@@ -167,7 +167,7 @@ async def find_user_by_id(message: Message, state: FSMContext):
     matn = f"❌ <b>{user_id}</b> ID raqamli foydalanuvchi topilmadi."
 
   await message.answer(matn, parse_mode='HTML')
-  await state.clear()  # Holatni tozalaymiz
+  await state.clear()  
 
 @router.message(F.text=='Nomerlar royhati')
 async def foydalanuvchilar(message:Message):
@@ -182,7 +182,6 @@ async def foydalanuvchilar(message:Message):
 @router.message(F.text == 'Nomerlar tarixi')
 async def nomerlar_tarixi(message: Message):
   if message.from_user.id in ADMINS:
-    # Jami nomerlar sonini sanaymiz
     total_numbers = session.query(Order_numbers).count()
 
     keyboard = InlineKeyboardMarkup(
@@ -210,7 +209,6 @@ async def ask_number_id(callback: CallbackQuery, state: FSMContext):
   await callback.answer()
 
 
-# 3. Kiritilgan ID bo'yicha bazadan qidirib topib berish
 @router.message(NumberSearchState.waiting_for_number_id)
 async def find_number_by_id(message: Message, state: FSMContext):
   if not message.text.isdigit():
@@ -226,18 +224,17 @@ async def find_number_by_id(message: Message, state: FSMContext):
         f'✅ <b>Nomer topildi:</b>\n\n'
         f'🆔 <b>ID:</b> {item.id}\n'
         f'🌍 <b>Davlat (Country):</b> {item.country}\n'
-        f'💰 <b>Narxi (Price):</b> {item.price}\n'
         f'👤 <b>Egasi (Owner):</b> {item.owner_number}\n'
         f'📞 <b>Nomer:</b> {item.number}\n'
         f'📊 <b>Status:</b> {item.status}\n'
-        f'🔑 <b>Kod:</b> {item.code}\n'
+        f'🔑 <b>Kod:</b> {item.kod}\n'
         f'🛡 <b>Parol 2:</b> {item.pas2}'
     )
   else:
     matn = f"❌ <b>{num_id}</b> ID raqamli nomer topilmadi."
 
   await message.answer(matn, parse_mode='HTML')
-  await state.clear()  # Holatni tozalaymiz
+  await state.clear()
 @router.message(F.text=='Hisobiga qoshish')
 async def foydalanuvchilar(message:Message,state:FSMContext):
     if message.from_user.id in ADMINS:
