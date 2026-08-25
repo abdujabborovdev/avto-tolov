@@ -36,9 +36,15 @@ async def nomer(call: CallbackQuery):
     country_name = data_name[1]
     price = int(data_name[2])
     tg_id = int(data_name[3])
+
     user = session.query(User).filter(User.id == tg_id).first()
-    hisobi = int(user.hisob) if user and user.hisob and str(
-        user.hisob).isdigit() else 0
+
+    # Xavfsiz tarzda balansni tekshirish (minus sonlarni ham tushunadi)
+    try:
+        hisobi = int(user.hisob) if user and user.hisob is not None else 0
+    except (ValueError, TypeError):
+        hisobi = 0
+
     if hisobi >= price:
         try:
             async with aiohttp.ClientSession() as sess:
@@ -46,17 +52,15 @@ async def nomer(call: CallbackQuery):
                     'key': f'{SEENSMS_KEY}',
                     'action': 'accounts_get',
                     'country': f'{country_name}'
-
                 }) as r:
                     dat = await r.json()
         except Exception as e:
             await call.message.edit_text(f"""Xatolik {e}, Qayta urinib koring""")
-            return  
+            return
 
-        if isinstance(dat, dict) and dat.get(
-                'number'):
-            user.hisob = str(int(user.hisob) - int(
-                price))
+        if isinstance(dat, dict) and dat.get('number'):
+            # Balansni ayirish
+            user.hisob = str(int(user.hisob) - int(price))
             session.commit()
 
             keyboard = check_number(dat.get('id'))
@@ -65,23 +69,22 @@ async def nomer(call: CallbackQuery):
             num_country = dat.get('country')
             tg_id_owner = int(call.from_user.id)
             number = dat.get('number')
+
             new_number_order = Order_numbers(id=num_id, country=num_country, owner_number=tg_id_owner, number=number)
             session.add(new_number_order)
             session.commit()
 
-            await call.message.edit_text(f"""✅Muvafiyaqiyatlik nomer olindi
+            await call.message.edit_text(f"""✅ Muvafiyaqiyatlik nomer olindi
 
 <b>Nomer:</b> {number} 
 <b>id:</b> {num_id}""", parse_mode='HTML', reply_markup=keyboard)
         else:
             error_msg = dat.get('message', "Hozirda bu davlatda bo'sh raqamlar yo'q!") if isinstance(dat,
                                                                                                      dict) else "Noma'lum xatolik"
-            await call.message.edit_text(
-                f"❌ Raqam berilmadi.\nSabab: {error_msg}")
+            await call.message.edit_text(f"❌ Raqam berilmadi.\nSabab: {error_msg}")
     else:
-        await call.message.edit_text("""Mablag'ingiz yetarlik emas❌,
-Hisobingzni toldirng 💳""", reply_markup=tolov_qilish)
-
+        await call.message.edit_text("""Mablag'ingiz yetarlik emas❌,\nHisobingzni toldirng 💳""",
+                                     reply_markup=tolov_qilish)
 
 @router.callback_query(F.data.startswith('check_number:'))
 async def check_num(call: CallbackQuery):
