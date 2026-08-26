@@ -1,5 +1,7 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
+import keyboards
+
 admin_k = ReplyKeyboardMarkup(keyboard=[
     [
         KeyboardButton(text='Foydalanuvchilar'),
@@ -13,6 +15,9 @@ admin_k = ReplyKeyboardMarkup(keyboard=[
         KeyboardButton(text='Hisobiga qoshish'),
         KeyboardButton(text='Nomerlar tarixi'),
 
+    ],
+    [
+        KeyboardButton(text='Habar yuborish')
     ]
 
 ],resize_keyboard=True)

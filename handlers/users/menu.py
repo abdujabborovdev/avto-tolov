@@ -13,7 +13,7 @@ router = Router()
 @router.message(F.text=='Kabinet')
 async def menu(message:Message):
     user = session.get(User, message.from_user.id)
-    await message.answer(f"""<b><tg-emoji emoji-id='5442804194983554178'>📁</tg-emoji> Kabinet ID:</b> <code>6917400767 </code>
+    await message.answer(f"""<b><tg-emoji emoji-id='5442804194983554178'>📁</tg-emoji> Kabinet ID:</b> <code>{user.id} </code>
 
 <b><tg-emoji emoji-id='5443008004066651784'>💳</tg-emoji> Hisobingiz:</b>{user.hisob}  so'm""",reply_markup=tolov_qilish,parse_mode='HTML')
 

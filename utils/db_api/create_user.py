@@ -16,7 +16,6 @@ class User(Base):
   username: Mapped[str] = mapped_column(String(115), nullable=True)
   name: Mapped[str] = mapped_column(String(255), nullable=False)
 
-
 class Transaction(Base):
   __tablename__ = 'transactions'
 

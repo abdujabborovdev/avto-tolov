@@ -1,17 +1,12 @@
-from calendar import firstweekday
-from idlelib import rpc
-
 from aiogram import Router,F
-from aiogram.filters import CommandStart
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+
 from data.config import *
 from keyboards.default.admin import admin_k
 from utils.db_api.create_user import Numbers_list, session, Transaction, User, Order_numbers
 import aiohttp
 from states.add_mon import Suma_qosh, AdminSearchState,NumberSearchState, TransactionSearchState
 from aiogram.fsm.context import FSMContext
-
+from states.send_message import *
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
@@ -256,7 +251,6 @@ async def foydalanuvchilar(message:Message,state:FSMContext):
 async def foydalanuvchilar(message: Message, state: FSMContext):
     text = message.text.strip()
 
-    # Manfiy (-) yoki musbat raqam kiritilganini tekshiramiz
     try:
         suma = int(text)
     except ValueError:
@@ -274,17 +268,14 @@ async def foydalanuvchilar(message: Message, state: FSMContext):
         await state.clear()
         return
 
-    # Joriy balansni xavfsiz o'qib olamiz
     try:
         current_hisob = int(user.hisob) if user.hisob is not None else 0
     except (ValueError, TypeError):
         current_hisob = 0
 
-    # Qiymatni qo'shish yoki ayirish (suma minus bo'lsa o'zi ayirib ketadi)
     user.hisob = current_hisob + suma
     session.commit()
 
-    # Natijani xabarda chiroyli qilib chiqaramiz
     if suma < 0:
         await message.answer(
             f"✅ Muvaffaqiyatli! Foydalanuvchi hisobidan <b>{abs(suma)}</b> so'm ayrildi.\n💳 Yangi balans: <b>{user.hisob}</b> so'm",
@@ -295,3 +286,39 @@ async def foydalanuvchilar(message: Message, state: FSMContext):
             parse_mode="HTML")
 
     await state.clear()
+
+
+
+from keyboards.default.cencel import cencel_but
+@router.message(F.text == "Habar yuborish")
+async def send_message(message:Message, state:FSMContext):
+    if message.from_user.id in ADMINS:
+        await state.set_state(Send_m.mess)
+        await message.answer(f"Userlarga yubormoqchi bolgan xabaringizni kiriting ✍🏻",reply_markup=cencel_but)
+
+
+@router.message(F.text == "Bekor qilish ❌")
+async def send_message(message:Message, state:FSMContext):
+    if message.from_user.id in ADMINS:
+        await state.clear()
+        await message.answer("Bekor qilinid ✅",reply_markup=admin_k)
+
+@router.message(Send_m.mess)
+async def send_message(message:Message, state:FSMContext):
+
+    user_ids = session.query(User.id).all()
+    user_id_list = [user_id for (user_id,) in user_ids]
+    secces = 0
+    blocked = 0
+    for user_id in user_id_list:
+        try:
+            await message.copy_to(chat_id=user_id)
+            secces += 1
+        except Exception as e:
+            blocked += 1
+            print(f"{user_id}: {e}")
+
+    await state.clear()
+
+
+    await message.answer(f"Xabaringiz muvafiyaqiyatlik yuborilindi jami yuborilinganlar - {secces}, yuborilmadi - {blocked}",reply_markup=admin_k)
