@@ -44,7 +44,7 @@ async def yangilash(message:Message):
         session.commit()
         try:
             for i in dat:
-                price = i['price'] * 1.2
+                price = i['price'] * 1.3
                 new_number = Numbers_list(country=i['country'],price=price)
                 session.add(new_number)
                 session.commit()

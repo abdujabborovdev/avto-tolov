@@ -10,7 +10,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 router = Router()
 
-@router.message(F.text=='Kabinet')
+@router.message((F.text=='Kabinet') | (F.text == '/balance'))
 async def menu(message:Message):
     user = session.get(User, message.from_user.id)
     await message.answer(f"""<b><tg-emoji emoji-id='5442804194983554178'>📁</tg-emoji> Kabinet ID:</b> <code>{user.id} </code>
@@ -18,7 +18,7 @@ async def menu(message:Message):
 <b><tg-emoji emoji-id='5443008004066651784'>💳</tg-emoji> Hisobingiz:</b>{user.hisob}  so'm""",reply_markup=tolov_qilish,parse_mode='HTML')
 
 
-@router.message(F.text=='Nomer olish')
+@router.message((F.text=='Nomer olish') | (F.text=='/buy_number'))
 async def menu(message:Message):
     await message.answer(f"""📶 <b>Tayyor Telegram akkauntlar</b> — bu oldindan ro‘yxatdan o‘tgan, ishlashga tayyor akkauntlar bo‘lib, sizga doimiy foydalanish uchun taqdim etiladi.
 
@@ -54,19 +54,17 @@ async def tolov_turi(call:CallbackQuery):
     keyboard = generate_countries_keyboard(countries, page=page)
     await call.message.edit_text("🌍 Kerakli davlatni tanlang:",reply_markup=keyboard)
 
-@router.message(F.text=='Pul kiritish')
+@router.message((F.text=='Pul kiritish') | (F.text=='/deposit'))
 async def menu(message:Message):
     await message.answer("🗃️ Kerakli to’lov tizimini tanlang:",reply_markup=tolov_tur)
 
 
 
 
-@router.message(F.text == 'Nomerlarim')
+@router.message((F.text == 'Nomerlarim') | (F.text=='/my_numbers'))
 async def menu(message: Message):
-    # Foydalanuvchining raqamlarini bazadan qidiramiz
     nomerlar = session.query(Order_numbers).filter(Order_numbers.owner_number == message.from_user.id).all()
 
-    # Agar raqamlar bo'lmasa
     if not nomerlar:
         await message.answer("❌ Sizda hozircha sotib olingan raqamlar yo'q.")
         return
@@ -128,7 +126,7 @@ async def nomer_detail(call: CallbackQuery):
     await call.answer()
 
 
-@router.message(F.text == 'Support')
+@router.message((F.text == 'Support') | (F.text=='/support'))
 async def menu(message: Message):
 
     await message.answer("""<b>🆘 SUPPORT – Qo‘llab-quvvatlash xizmati</b>
@@ -137,7 +135,7 @@ Savollaringiz yoki muammolaringiz bormi? Biz sizga tez va samarali yordam berami
                          reply_markup=support, parse_mode='HTML')
 
 
-@router.message(F.text=='Qolanma')
+@router.message((F.text=='Qolanma') | (F.text=='/faq'))
 async def qolanma(messege: Message):
     await messege.answer(f"""📖 <b>Botdan foydalanish bo'yicha qo'llanma
 
