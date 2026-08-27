@@ -152,10 +152,27 @@ async def check_pay(call: CallbackQuery):
 
             tranzaksiya.holat = 'success'
 
-            # --- # 1. BU YERGA BAZAGA SAQLASH (COMMIT) QO'SHILDI ---
             session.commit()
+            masked_num = (
+                    telegram_id[:2] + '*' * (len(str(telegram_id)) - 4) + str(telegram_id)[-2:]
+            )
 
-            # --- # 2. ADMINGA TO'LOV MUVAFFAQIYATLI BO'LGANI HAQIDA XABAR BERISH ---
+            CHANNEL_ID = (
+                '-1004365925735'
+            )
+            try:
+                await call.bot.send_message(
+                    CHANNEL_ID,
+                    text=(
+                        f'🔔 <b>Hisob toldirilindi</b>\n\n'
+                        f"👤 Foydalanuvchi ID: <code>{telegram_id}</code>\n"
+                        f"💵 Summa: <b>{summa} so'm</b>\n"
+                        f"🆔 Order ID: <code>{order_id}</code>"
+                    ),
+                    parse_mode='HTML',
+                )
+            except Exception as e:
+                print(f'Kanalga yuborishda xatolik: {e}')
             for admin_id in ADMINS:
                 try:
                     await call.bot.send_message(
@@ -168,7 +185,6 @@ async def check_pay(call: CallbackQuery):
                     )
                 except Exception:
                     pass
-            # ----------------------------------------------------------------------
 
             await call.message.edit_text(f"✅ To'lov muvaffaqiyatli tasdiqlandi! {summa} so'm hisobingizga qo'shildi.")
             await call.message.edit_reply_markup(reply_markup=None)

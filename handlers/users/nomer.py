@@ -13,7 +13,6 @@ URL = 'https://seensms.uz/api/v1'
 SEENSMS_KEY = SEENSMS_KEY
 
 
-# 1. DAVLAT DETALLARI (Ismi nomer_detail_handler qilindi)
 @router.callback_query(F.data.startswith("country:"))
 async def nomer_detail_handler(call: CallbackQuery):
     data_name = call.data.split(':')
@@ -87,6 +86,26 @@ async def buy_number_handler(call: CallbackQuery):
         )
         session.add(new_number_order)
         session.commit()
+
+        masked_num = (
+                number[:3] + '*' * (len(str(number)) - 5) + str(number)[-2:]
+        )
+
+        CHANNEL_ID = (
+            '-1004365925735'
+        )
+        try:
+            await call.bot.send_message(
+                CHANNEL_ID,
+                text=(
+                    f'🔔 <b>Yangi raqam sotib olindi!</b>\n\n'
+                    f'🌍 Davlat: {num_country}\n'
+                    f'📞 Nomer: <code>{masked_num}</code>'
+                ),
+                parse_mode='HTML',
+            )
+        except Exception as e:
+            print(f'Kanalga yuborishda xatolik: {e}')
 
         keyboard = check_number(num_id)
         for admin_id in ADMINS:
