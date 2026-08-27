@@ -153,9 +153,12 @@ async def check_pay(call: CallbackQuery):
             tranzaksiya.holat = 'success'
 
             session.commit()
-            masked_num = (
-                    telegram_id[:2] + '*' * (len(str(telegram_id)) - 4) + str(telegram_id)[-2:]
-            )
+            
+            masked_id = (
+                    str(telegram_id)[:2]
+                        + '*' * (len(str(telegram_id)) - 4)
+                            + str(telegram_id)[-2:]
+                                )
 
             CHANNEL_ID = (
                 '-1004365925735'
