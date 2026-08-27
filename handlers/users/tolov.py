@@ -168,9 +168,8 @@ async def check_pay(call: CallbackQuery):
                     CHANNEL_ID,
                     text=(
                         f'🔔 <b>Hisob toldirilindi</b>\n\n'
-                        f"👤 Foydalanuvchi ID: <code>{telegram_id}</code>\n"
+                        f"👤 Foydalanuvchi ID: <code>{masked_id}</code>\n"
                         f"💵 Summa: <b>{summa} so'm</b>\n"
-                        f"🆔 Order ID: <code>{order_id}</code>"
                     ),
                     parse_mode='HTML',
                 )
