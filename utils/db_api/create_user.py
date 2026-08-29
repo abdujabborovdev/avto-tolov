@@ -42,6 +42,12 @@ class Order_numbers(Base):
   kod = Column(BigInteger,default='00000')
   pas2 = Column(String,default='None')
 
+class SecretApiKey(Base):
+  __tablename__ = 'secret_api_key'
+  id = Column(Integer, primary_key=True, )
+  user_telegram_id = Column(BigInteger,nullable=False)
+  secret_api_key = Column(String(115), unique=True, nullable=False, index=True)
+
 
 
 engine = create_engine(DB_KEY)

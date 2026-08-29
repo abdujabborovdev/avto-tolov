@@ -93,121 +93,127 @@ async def summa(message: Message, state: FSMContext):
     session.commit()
 
 
+active_checks = set()
+
+
 @router.callback_query(F.data.startswith("check_pay"))
 async def check_pay(call: CallbackQuery):
-    await call.answer()
+    user_id = call.from_user.id
 
-    data_parts = call.data.split(":")
-    if len(data_parts) < 4:
-        await call.message.answer("⚠️ Xatolik: Ma'lumotlar yetarli emas.\n\n<b>Xatolik roy bersa:</b> @itredr",
-                                  parse_mode='HTML')
+    if user_id in active_checks:
+        await call.answer("⏳ So'rovingiz bajarilmoqda, biroz kuting...", show_alert=False)
         return
 
-    order_id = data_parts[1]
-    telegram_id = int(data_parts[2])
-    summa = int(data_parts[3])
-
-    if not order_id:
-        await call.message.answer("❌ Order ID topilmadi.\n\n<b>Xatolik roy bersa:</b> @itredr", parse_mode='HTML')
-        return
-
-    url = f"https://inpay.uz/api/v1/transactions/?order_id={order_id}"
-    headers = {"Accept": "application/json"}
-
-    async with aiohttp.ClientSession() as sess:
-        async with sess.post(url, headers=headers) as response:
-            data = await response.json()
+    active_checks.add(user_id)
 
     try:
-        status = data.get("data", {}).get("status") or data.get("status", "pending")
-    except Exception:
-        status = "pending"
+        await call.answer()
 
-    try:
+        data_parts = call.data.split(":")
+        if len(data_parts) < 4:
+            await call.message.answer("⚠️ Xatolik: Ma'lumotlar yetarli emas.\n\n<b>Xatolik roy bersa:</b> @itredr",
+                                      parse_mode='HTML')
+            return
+
+        order_id = data_parts[1]
+        telegram_id = int(data_parts[2])
+        summa = int(data_parts[3])
+
+        if not order_id:
+            await call.message.answer("❌ Order ID topilmadi.\n\n<b>Xatolik roy bersa:</b> @itredr", parse_mode='HTML')
+            return
+
+        url = f"https://inpay.uz/api/v1/transactions/?order_id={order_id}"
+        headers = {"Accept": "application/json"}
+
+        async with aiohttp.ClientSession() as sess:
+            async with sess.post(url, headers=headers) as response:
+                data = await response.json()
+
+        try:
+            status = data.get("data", {}).get("status") or data.get("status", "pending")
+        except Exception:
+            status = "pending"
+
         tranzaksiya = session.query(Transaction).filter(Transaction.order_id == order_id).first()
 
-        if tranzaksiya.holat == "success":
+        if tranzaksiya and tranzaksiya.holat == "success":
             await call.message.answer(
                 "✅ Bu to'lov muvaffaqiyatli amalga oshirilgan!\n\n<b>Xatolik roy bersa:</b> @itredr", parse_mode='HTML')
             return
 
-        tranzaksiya.holat = status
-        session.commit()
-
-    except:
-        tranzaksiya = Transaction(
-            order_id=order_id,
-            telegram_id=telegram_id,
-            summa=summa,
-            holat=status
-        )
-        session.add(tranzaksiya)
-        session.commit()
-
-    if status == "success":
-        user = session.query(User).filter(User.id == telegram_id).first()
-        if user:
-            current_hisob = int(user.hisob) if user.hisob else 0
-            user.hisob = current_hisob + summa
-
-            tranzaksiya.holat = 'success'
-
-            session.commit()
-            
-            masked_id = (
-                    str(telegram_id)[:2]
-                        + '*' * (len(str(telegram_id)) - 4)
-                            + str(telegram_id)[-2:]
-                                )
-
-            CHANNEL_ID = (
-                '-1004365925735'
+        if not tranzaksiya:
+            tranzaksiya = Transaction(
+                order_id=order_id,
+                telegram_id=telegram_id,
+                summa=summa,
+                holat=status
             )
-            try:
-                await call.bot.send_message(
-                    CHANNEL_ID,
-                    text=(
-                        f'🔔 <b>Hisob toldirilindi</b>\n\n'
-                        f"👤 Foydalanuvchi ID: <code>{masked_id}</code>\n"
-                        f"💵 Summa: <b>{summa} so'm</b>\n"
-                    ),
-                    parse_mode='HTML',
-                )
-            except Exception as e:
-                print(f'Kanalga yuborishda xatolik: {e}')
-            for admin_id in ADMINS:
-                try:
-                    await call.bot.send_message(
-                        admin_id,
-                        f"💰 <b>Yangi to'lov amalga oshirildi!</b>\n\n"
-                        f"👤 Foydalanuvchi ID: <code>{telegram_id}</code>\n"
-                        f"💵 Summa: <b>{summa} so'm</b>\n"
-                        f"🆔 Order ID: <code>{order_id}</code>",
-                        parse_mode="HTML"
-                    )
-                except Exception:
+            session.add(tranzaksiya)
+        else:
+            tranzaksiya.holat = status
+
+        session.commit()
+
+        if status == "success":
+            user = session.query(User).filter(User.id == telegram_id).first()
+            if user:
+                if tranzaksiya.holat == 'success':
                     pass
 
-            await call.message.edit_text(f"✅ To'lov muvaffaqiyatli tasdiqlandi! {summa} so'm hisobingizga qo'shildi.")
-            await call.message.edit_reply_markup(reply_markup=None)
+                current_hisob = int(user.hisob) if user.hisob else 0
+                user.hisob = current_hisob + summa
+                tranzaksiya.holat = 'success'
+                session.commit()
+
+                masked_id = (str(telegram_id)[:2] + '*' * (len(str(telegram_id)) - 4) + str(telegram_id)[-2:])
+                CHANNEL_ID = '-1004365925735'
+
+                try:
+                    await call.bot.send_message(
+                        CHANNEL_ID,
+                        text=(
+                            f'🔔 <b>Hisob toldirilindi</b>\n\n'
+                            f"👤 Foydalanuvchi ID: <code>{masked_id}</code>\n"
+                            f"💵 Summa: <b>{summa} so'm</b>\n"
+                        ),
+                        parse_mode='HTML',
+                    )
+                except Exception as e:
+                    print(f'Kanalga yuborishda xatolik: {e}')
+
+                for admin_id in ADMINS:
+                    try:
+                        await call.bot.send_message(
+                            admin_id,
+                            f"💰 <b>Yangi to'lov amalga oshirildi!</b>\n\n"
+                            f"👤 Foydalanuvchi ID: <code>{telegram_id}</code>\n"
+                            f"💵 Summa: <b>{summa} so'm</b>\n"
+                            f"🆔 Order ID: <code>{order_id}</code>",
+                            parse_mode="HTML"
+                        )
+                    except Exception:
+                        pass
+
+                await call.message.edit_text(
+                    f"✅ To'lov muvaffaqiyatli tasdiqlandi! {summa} so'm hisobingizga qo'shildi.")
+            else:
+                await call.message.answer("⚠️ Siz bazadan topilmadingiz.\n\n<b>Xatolik roy bersa:</b> @itredr",
+                                          parse_mode='HTML')
+
+        elif status == "pending":
+            await call.answer("⏳ To'lov hali amalga oshirilmagan (Kutilmoqda).", show_alert=False)
+        elif status == "failed":
+            await call.answer("❌ To'lov muvaffaqiyatsiz yakunlandi.\n\n<b>Xatolik roy bersa:</b> @itredr",
+                              parse_mode='HTML', show_alert=False)
+        elif status == "cancelled":
+            await call.answer("🚫 To'lov bekor qilindi.\n\n<b>Xatolik roy bersa:</b> @itredr", parse_mode='HTML',
+                              show_alert=False)
         else:
-            await call.message.answer("⚠️ Siz bazadan topilmadingiz.\n\n<b>Xatolik roy bersa:</b> @itredr",
-                                      parse_mode='HTML')
+            await call.answer(f"ℹ️ To'lov holati: {status}\n\n<b>Xatolik roy bersa:</b> @itredr", parse_mode='HTML',
+                              show_alert=False)
 
-    elif status == "pending":
-        tranzaksiya.holat = 'pending'
-        await call.answer("⏳ To'lov hali amalga oshirilmagan (Kutilmoqda).", show_alert=False)
-    elif status == "failed":
-        tranzaksiya.holat = 'failed'
-        await call.answer("❌ To'lov muvaffaqiyatsiz yakunlandi.\n\n<b>Xatolik roy bersa:</b> @itredr",
-                          parse_mode='HTML', show_alert=False)
-    elif status == "cancelled":
-        tranzaksiya.holat = 'cancelled'
-        await call.answer("🚫 To'lov bekor qilindi.\n\n<b>Xatolik roy bersa:</b> @itredr", parse_mode='HTML',
-                          show_alert=False)
-    else:
-        tranzaksiya.holat = 'None'
-        await call.answer(f"ℹ️ To'lov holati: {status}\n\n<b>Xatolik roy bersa:</b> @itredr", parse_mode='HTML',
-                          show_alert=False)
+        session.commit()
 
-    session.commit()
+    finally:
+        active_checks.discard(user_id)

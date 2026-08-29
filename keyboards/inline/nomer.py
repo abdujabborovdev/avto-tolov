@@ -7,7 +7,6 @@ number_ols = InlineKeyboardMarkup(inline_keyboard=[
 ])
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-# Barcha davlat kodlari to'liq o'zbekcha nomlari va bayroqlari bilan
 COUNTRY_NAMES = {
     "CO": "Kolumbiya 🇨🇴", "US": "Amerika 🇺🇸", "IN": "Hindiston 🇮🇳", "BD": "Bangladesh 🇧🇩",
     "IR": "Eron 🇮🇷", "ID": "Indoneziya 🇮🇩", "PK": "Pokiston 🇵🇰", "CL": "Chili 🇨🇱",

@@ -15,8 +15,7 @@ async def bot_start(message: Message):
     username = None
     user = session.query(User).filter(User.id == message.from_user.id).first()
     if user:
-
-        await message.answer(f"""<b>👋 Assalomu alaykum COLE SMM | foydalanuvchisi !</b>
+        await message.answer(f"""<b>👋 Assalomu alaykum X BOMER | foydalanuvchisi !</b>
 
 <b>🚀 Ushbu bot sizga Telegram tarmoqlari uchun ishonchli va kafolatliy  TG profil xizmatlarini taklif etadi!
 💫Bizning botimizga obuna bo'ling va do'stlaringiz bilan baham ko'ring

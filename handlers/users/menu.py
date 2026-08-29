@@ -4,6 +4,7 @@ from aiogram.types import Message, CallbackQuery
 
 from keyboards.inline.nomer import generate_countries_keyboard, number_ols
 from keyboards.inline.support import support
+from keyboards.inline.create_key import create_key, secret_key_inb
 from keyboards.inline.tolov import tolov_qilish,tolov_tur
 from utils.db_api.create_user import *
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -156,3 +157,30 @@ Hurmatli foydalanuvchi! Botimiz orqali virtual raqamlar sotib olish va ularga ke
 • Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.</blockquote>
 
 ⚠️ <i>Eslatma: Agar SMS biroz kechikib kelsa, "📲 SMS olish" tugmasini bir necha soniyadan so'ng qayta bosing.</i>""",parse_mode='HTML')
+
+
+
+
+@router.message((F.text=='Hamkorlik') | (F.text=='/hamkorlik'))
+async def hamkorlik(message: Message):
+    secret_key = session.query(SecretApiKey).filter(SecretApiKey.user_telegram_id == message.from_user.id).first()
+    user = session.query(User).filter(User.id == message.from_user.id).first()
+    if secret_key:
+        keyboard = secret_key_inb()
+        await message.answer(f"""<b>⚙️ Api dokument:</b>
+🔗 https://xbomer.uz/api/
+
+<b>🔑 Api xizmat:</b>
+🔗 https://xbomer.uz/api/v1
+
+<b>🔑 Sizning API kalitingiz:</b> <code>{secret_key.secret_api_key}</code>
+
+<b>💵 Balansingiz:</b> {user.hisob} so'm""",reply_markup=keyboard)
+    else:
+        owner_id = int(message.from_user.id)
+        create_button = create_key(owner_id=owner_id)
+        await message.answer(f"""<b>Hamkorlik dasturidan foydalanish uchun API kalit yaratishingiz kerak <tg-emoji emoji-id='5427009714745517609'>✅</tg-emoji></b>
+
+<blockquote expandable>• API kalit yaratish uchun pasdagi <b>🔑 Kalit yaratish</b> tugmasini bosing 
+• Kalitingizni boshqa odamga korsatmang va yubormang
+• Va havsiz joyda saqlang</blockquote>""",reply_markup=create_button,parse_mode='HTML')

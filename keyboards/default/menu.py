@@ -15,6 +15,9 @@ menu = ReplyKeyboardMarkup(keyboard=
             KeyboardButton(text='Qolanma',icon_custom_emoji_id='5373098009640836781'),
             KeyboardButton(text='Support',icon_custom_emoji_id='5220108512893344933')
         ],
+            [
+              KeyboardButton(text="Hamkorlik",icon_custom_emoji_id='5357080225463149588')
+            ],
 
         ],resize_keyboard=True
 )
