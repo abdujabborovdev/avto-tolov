@@ -170,7 +170,7 @@ async def hamkorlik(message: Message):
         await message.answer(f"""<b>⚙️ Api dokument:</b>
 🔗 https://xbomer.uz/api/
 
-<b>🔑 Api xizmat:</b>
+<b>🔑Ilk Api xizmat:</b>
 🔗 https://xbomer.uz/api/v1
 
 <b>🔑 Sizning API kalitingiz:</b> <code>{secret_key.secret_api_key}</code>

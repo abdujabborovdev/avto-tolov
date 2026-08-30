@@ -9,7 +9,6 @@ from utils.db_api.create_user import session, User
 router = Router()
 
 
-
 @router.message(CommandStart())
 async def bot_start(message: Message):
     username = None

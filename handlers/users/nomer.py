@@ -4,7 +4,6 @@ from aiogram.types import Message, CallbackQuery
 from data.config import *
 import aiohttp
 from data.config import ADMINS
-from keyboards.inline.tolov import tolov_qilish
 from utils.db_api.create_user import session, User, Transaction, Numbers_list, Order_numbers
 
 router = Router()
@@ -138,9 +137,7 @@ async def buy_number_handler(call: CallbackQuery):
             error_msg = dat.get('message', "Hozirda bu davlatda bo'sh raqamlar yo'q!") if isinstance(dat,
                                                                                                      dict) else "Noma'lum xatolik"
             await call.message.edit_text(f"❌ Raqam berilmadi.\nSabab: {error_msg}")
-
     finally:
-        # Ish tugagach, qulfni yechamiz
         active_number_purchases.discard(user_id)
 
 

@@ -1,6 +1,6 @@
 from aiogram import Router,F
 
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import  CallbackQuery
 from utils.db_api.create_user import *
 import secrets
 from aiogram.exceptions import TelegramBadRequest
@@ -28,7 +28,7 @@ async def create_key(call: CallbackQuery):
 ⚙️ Api dokument:
 🔗 https://xbomer.uz/api/
     
-🔑 Api xizmat:
+🔑 Ilk Api xizmat:
 🔗 https://xbomer.uz/api/v1
     
 🔑 Sizning API kalitingiz: <code>{secret_key}</code>
