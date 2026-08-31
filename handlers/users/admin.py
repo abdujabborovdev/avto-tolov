@@ -1,10 +1,12 @@
-from aiogram import Router,F
+
+from aiogram import Router, F
 
 from data.config import *
 from keyboards.default.admin import admin_k
-from utils.db_api.create_user import Numbers_list, session, Transaction, User, Order_numbers
+from sqlalchemy import select, delete, func
+from utils.db_api.create_user import Numbers_list, async_session, Transaction, User, Order_numbers
 import aiohttp
-from states.add_mon import Suma_qosh, AdminSearchState,NumberSearchState, TransactionSearchState
+from states.add_mon import Suma_qosh, AdminSearchState, NumberSearchState, TransactionSearchState
 from aiogram.fsm.context import FSMContext
 from states.send_message import *
 from aiogram.types import (
@@ -15,230 +17,253 @@ from aiogram.types import (
 )
 router = Router()
 
-SEENSMS_KEY=SEENSMS_KEY
+SEENSMS_KEY = SEENSMS_KEY
 ADMINS = ADMINS
 
 
 @router.message(F.text == '/secret')
 async def admin(message: Message):
     if message.from_user.id in ADMINS:
-        await message.answer(f"""Admin panelga hush kelibsiz""",reply_markup=admin_k)
-
+        await message.answer(f"""Admin panelga hush kelibsiz""", reply_markup=admin_k)
     else:
         await message.answer("Siz admin emasiz")
 
+
 @router.message(F.text == 'Nomerlarni yangilash')
-async def yangilash(message:Message):
+async def yangilash(message: Message):
     if message.from_user.id in ADMINS:
 
         URL = 'https://seensms.uz/api/v1'
 
         async with aiohttp.ClientSession() as sess:
             async with sess.post(URL, data={
-            'key': f'{SEENSMS_KEY}',
-            'action': 'accounts_countries',
-        }) as r:
-             dat = await r.json()
+                'key': f'{SEENSMS_KEY}',
+                'action': 'accounts_countries',
+            }) as r:
+                dat = await r.json()
 
-        session.query(Numbers_list).delete()
-        session.commit()
-        try:
-            for i in dat:
-                price = i['price'] * 1.4
-                new_number = Numbers_list(country=i['country'],price=price)
-                session.add(new_number)
-                session.commit()
-            await message.answer(f"""Nomerlar royhati yangilandi""")
+        async with async_session() as session:
+            await session.execute(delete(Numbers_list))
+            await session.commit()
+            try:
+                for i in dat:
+                    price = i['price'] * 1.4
+                    new_number = Numbers_list(country=i['country'], price=price)
+                    session.add(new_number)
+                    await session.commit()
+                await message.answer(f"""Nomerlar royhati yangilandi""")
 
-        except Exception as e:
-            await message.answer(f"""Xatolik - {e}""")
-
+            except Exception as e:
+                await message.answer(f"""Xatolik - {e}""")
 
 
 @router.message(F.text == "Tolovlar tarixi")
 async def tarix_t(message: Message):
-  if message.from_user.id in ADMINS:
-    # Jami to'lovlar sonini sanaymiz
-    total_transactions = session.query(Transaction).count()
+    if message.from_user.id in ADMINS:
+        async with async_session() as session:
+            result = await session.execute(select(func.count()).select_from(Transaction))
+            total_transactions = result.scalar_one()
 
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[
-            InlineKeyboardButton(
-                text="🔍 Tranzaksiya ID orqali qidirish",
-                callback_data="search_transaction",
-            )
-        ]]
-    )
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[[
+                InlineKeyboardButton(
+                    text="🔍 Tranzaksiya ID orqali qidirish",
+                    callback_data="search_transaction",
+                )
+            ]]
+        )
 
-    await message.answer(
-        f"💳 <b>Jami to'lovlar tarixi soni:</b> {total_transactions} ta",
-        reply_markup=keyboard,
-        parse_mode="HTML",
-    )
+        await message.answer(
+            f"💳 <b>Jami to'lovlar tarixi soni:</b> {total_transactions} ta",
+            reply_markup=keyboard,
+            parse_mode="HTML",
+        )
 
 
 @router.callback_query(F.data == "search_transaction")
 async def ask_transaction_id(callback: CallbackQuery, state: FSMContext):
-  await callback.message.answer(
-      "Qidirmoqchi bo'lgan to'lovning <b>ID</b> (order_id) raqamini kiriting:",
-      parse_mode="HTML",
-  )
-  await state.set_state(TransactionSearchState.waiting_for_transaction_id)
-  await callback.answer()
+    await callback.message.answer(
+        "Qidirmoqchi bo'lgan to'lovning <b>ID</b> (order_id) raqamini kiriting:",
+        parse_mode="HTML",
+    )
+    await state.set_state(TransactionSearchState.waiting_for_transaction_id)
+    await callback.answer()
 
 
 @router.message(TransactionSearchState.waiting_for_transaction_id)
 async def find_transaction_by_id(message: Message, state: FSMContext):
-  trans_id = message.text.strip()  # Matnligicha qabul qilamiz
+    trans_id = message.text.strip()  # Matnligicha qabul qilamiz
 
-  # Bazadan Transaction jadvalidan order_id bo'yicha qidiramiz
-  tranzaksiya = session.query(Transaction).filter_by(order_id=trans_id).first()
+    async with async_session() as session:
+        result = await session.execute(select(Transaction).filter_by(order_id=trans_id))
+        tranzaksiya = result.scalar_one_or_none()
 
-  if tranzaksiya:
-    matn = (
-        f"✅ <b>To'lov topildi:</b>\n\n"
-        f"🆔 <b>ID (Order ID):</b> {tranzaksiya.order_id}\n"
-        f"💰 <b>Summa:</b> {tranzaksiya.summa}\n"
-        f"📊 <b>Status (Holat):</b> {tranzaksiya.holat}\n"
-        f"⏳ <b>Vaqti:</b> {tranzaksiya.vaqti}\n"
-        f"👤 <b>Telegram ID (Owner):</b> {tranzaksiya.telegram_id}"
-    )
-  else:
-    matn = f"❌ <b>{trans_id}</b> ID raqamli to'lov topilmadi."
+    if tranzaksiya:
+        matn = (
+            f"✅ <b>To'lov topildi:</b>\n\n"
+            f"🆔 <b>ID (Order ID):</b> {tranzaksiya.order_id}\n"
+            f"💰 <b>Summa:</b> {tranzaksiya.summa}\n"
+            f"📊 <b>Status (Holat):</b> {tranzaksiya.holat}\n"
+            f"⏳ <b>Vaqti:</b> {tranzaksiya.vaqti}\n"
+            f"👤 <b>Telegram ID (Owner):</b> {tranzaksiya.telegram_id}"
+        )
+    else:
+        matn = f"❌ <b>{trans_id}</b> ID raqamli to'lov topilmadi."
 
-  await message.answer(matn, parse_mode="HTML")
-  await state.clear()
+    await message.answer(matn, parse_mode="HTML")
+    await state.clear()
+
 
 @router.message(F.text == 'Foydalanuvchilar')
 async def foydalanuvchilar(message: Message):
-  if message.from_user.id in ADMINS:
-    # Jami foydalanuvchilar sonini sanaymiz
-    user_count = session.query(User).count()
+    if message.from_user.id in ADMINS:
+        async with async_session() as session:
+            result = await session.execute(select(func.count()).select_from(User))
+            user_count = result.scalar_one()
 
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[
-            InlineKeyboardButton(
-                text='🔍 ID orqali qidirish', callback_data='search_user'
-            )
-        ]]
-    )
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[[
+                InlineKeyboardButton(
+                    text='🔍 ID orqali qidirish', callback_data='search_user'
+                )
+            ]]
+        )
 
-    await message.answer(
-        f'👥 <b>Jami foydalanuvchilar soni:</b> {user_count} ta',
-        reply_markup=keyboard,
-        parse_mode='HTML',
-    )
+        await message.answer(
+            f'👥 <b>Jami foydalanuvchilar soni:</b> {user_count} ta',
+            reply_markup=keyboard,
+            parse_mode='HTML',
+        )
 
 
 @router.callback_query(F.data == 'search_user')
 async def ask_user_id(callback: CallbackQuery, state: FSMContext):
-  await callback.message.answer(
-      "Qidirmoqchi bo'lgan foydalanuvchining <b>ID</b> raqamini kiriting:",
-      parse_mode='HTML',
-  )
-  await state.set_state(AdminSearchState.waiting_for_user_id)
-  await callback.answer()
+    await callback.message.answer(
+        "Qidirmoqchi bo'lgan foydalanuvchining <b>ID</b> raqamini kiriting:",
+        parse_mode='HTML',
+    )
+    await state.set_state(AdminSearchState.waiting_for_user_id)
+    await callback.answer()
 
 
 @router.message(AdminSearchState.waiting_for_user_id)
 async def find_user_by_id(message: Message, state: FSMContext):
-  if not message.text.isdigit():
-    await message.answer('❌ Iltimos, faqat raqamlardan iborat ID kiriting!')
-    return
+    if not message.text.isdigit():
+        await message.answer('❌ Iltimos, faqat raqamlardan iborat ID kiriting!')
+        return
 
-  user_id = int(message.text)
+    user_id = int(message.text)
 
-  user = session.query(User).filter_by(id=user_id).first()
+    async with async_session() as session:
+        result = await session.execute(select(User).filter_by(id=user_id))
+        user = result.scalar_one_or_none()
 
-  if user:
-    matn = (
-        f'✅ <b>Foydalanuvchi topildi:</b>\n\n'
-        f'🆔 <b>ID:</b> {user.id}\n'
-        f'👤 <b>Username:</b> @{user.username}\n'
-        f'🪪 <b>Ism:</b> {user.name}\n'
-        f'💳 <b>Balans:</b> {user.hisob} so\'m'
-    )
-  else:
-    matn = f"❌ <b>{user_id}</b> ID raqamli foydalanuvchi topilmadi."
+    if user:
+        matn = (
+            f'✅ <b>Foydalanuvchi topildi:</b>\n\n'
+            f'🆔 <b>ID:</b> {user.id}\n'
+            f'👤 <b>Username:</b> @{user.username}\n'
+            f'🪪 <b>Ism:</b> {user.name}\n'
+            f'💳 <b>Balans:</b> {user.hisob} so\'m'
+        )
+    else:
+        matn = f"❌ <b>{user_id}</b> ID raqamli foydalanuvchi topilmadi."
 
-  await message.answer(matn, parse_mode='HTML')
-  await state.clear()  
+    await message.answer(matn, parse_mode='HTML')
+    await state.clear()
 
-@router.message(F.text=='Nomerlar royhati')
-async def foydalanuvchilar(message:Message):
+
+@router.message(F.text == 'Nomerlar royhati')
+async def foydalanuvchilar(message: Message):
     if message.from_user.id in ADMINS:
-        royhat = session.query(Numbers_list).all()
+        async with async_session() as session:
+            result = await session.execute(select(Numbers_list))
+            royhat = result.scalars().all()
+
         matn = f"<b>Ro'yxati:</b>\n\n"
 
         for u in royhat:
             matn += f"ID: {u.id}| {u.country} | {u.price}\n"
         await message.answer(matn, parse_mode='HTML')
 
+
 @router.message(F.text == 'Nomerlar tarixi')
 async def nomerlar_tarixi(message: Message):
-  if message.from_user.id in ADMINS:
-    total_numbers = session.query(Order_numbers).count()
+    if message.from_user.id in ADMINS:
+        async with async_session() as session:
+            result = await session.execute(select(func.count()).select_from(Order_numbers))
+            total_numbers = result.scalar_one()
 
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[
-            InlineKeyboardButton(
-                text='🔍 Nomer ID orqali qidirish', callback_data='search_number'
-            )
-        ]]
-    )
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[[
+                InlineKeyboardButton(
+                    text='🔍 Nomer ID orqali qidirish', callback_data='search_number'
+                )
+            ]]
+        )
 
-    await message.answer(
-        f'📦 <b>Jami sotib olingan/tarixdagi nomerlar soni:</b> {total_numbers} ta',
-        reply_markup=keyboard,
-        parse_mode='HTML',
-    )
+        await message.answer(
+            f'📦 <b>Jami sotib olingan/tarixdagi nomerlar soni:</b> {total_numbers} ta',
+            reply_markup=keyboard,
+            parse_mode='HTML',
+        )
 
 
 @router.callback_query(F.data == 'search_number')
 async def ask_number_id(callback: CallbackQuery, state: FSMContext):
-  await callback.message.answer(
-      "Qidirmoqchi bo'lgan nomerning <b>ID</b> raqamini kiriting:",
-      parse_mode='HTML',
-  )
-  await state.set_state(NumberSearchState.waiting_for_number_id)
-  await callback.answer()
+    await callback.message.answer(
+        "Qidirmoqchi bo'lgan nomerning <b>ID</b> raqamini kiriting:",
+        parse_mode='HTML',
+    )
+    await state.set_state(NumberSearchState.waiting_for_number_id)
+    await callback.answer()
 
 
 @router.message(NumberSearchState.waiting_for_number_id)
 async def find_number_by_id(message: Message, state: FSMContext):
-  if not message.text.isdigit():
-    await message.answer('❌ Iltimos, faqat raqamlardan iborat ID kiriting!')
-    return
+    if not message.text.isdigit():
+        await message.answer('❌ Iltimos, faqat raqamlardan iborat ID kiriting!')
+        return
 
-  num_id = int(message.text)
+    num_id = int(message.text)
 
-  item = session.query(Order_numbers).filter_by(id=num_id).first()
+    async with async_session() as session:
+        result = await session.execute(select(Order_numbers).filter_by(id=num_id))
+        item = result.scalar_one_or_none()
 
-  if item:
-    matn = (
-        f'✅ <b>Nomer topildi:</b>\n\n'
-        f'🆔 <b>ID:</b> {item.id}\n'
-        f'🌍 <b>Davlat (Country):</b> {item.country}\n'
-        f'👤 <b>Egasi (Owner):</b> {item.owner_number}\n'
-        f'📞 <b>Nomer:</b> {item.number}\n'
-        f'📊 <b>Status:</b> {item.status}\n'
-        f'🔑 <b>Kod:</b> {item.kod}\n'
-        f'🛡 <b>Parol 2:</b> {item.pas2}'
-    )
-  else:
-    matn = f"❌ <b>{num_id}</b> ID raqamli nomer topilmadi."
+    if item:
+        matn = (
+            f'✅ <b>Nomer topildi:</b>\n\n'
+            f'🆔 <b>ID:</b> {item.id}\n'
+            f'🌍 <b>Davlat (Country):</b> {item.country}\n'
+            f'👤 <b>Egasi (Owner):</b> {item.owner_number}\n'
+            f'📞 <b>Nomer:</b> {item.number}\n'
+            f'📊 <b>Status:</b> {item.status}\n'
+            f'🔑 <b>Kod:</b> {item.kod}\n'
+            f'🛡 <b>Parol 2:</b> {item.pas2}'
+        )
+    else:
+        matn = f"❌ <b>{num_id}</b> ID raqamli nomer topilmadi."
 
-  await message.answer(matn, parse_mode='HTML')
-  await state.clear()
-@router.message(F.text=='Hisobiga qoshish')
-async def foydalanuvchilar(message:Message,state:FSMContext):
+    await message.answer(matn, parse_mode='HTML')
+    await state.clear()
+
+
+@router.message(F.text == 'Hisobiga qoshish')
+async def foydalanuvchilar(message: Message, state: FSMContext):
     if message.from_user.id in ADMINS:
         await state.set_state(Suma_qosh.tg_idsi)
         await message.answer(f"Idsini kiriting")
+
+
 @router.message(Suma_qosh.tg_idsi)
-async def foydalanuvchilar(message:Message,state:FSMContext):
+async def foydalanuvchilar(message: Message, state: FSMContext):
     user_id = message.text
-    useri = session.query(User).filter(User.id == user_id).first()
+
+    async with async_session() as session:
+        result = await session.execute(select(User).filter(User.id == user_id))
+        useri = result.scalar_one_or_none()
+
     if useri:
         await state.update_data(tg_idsi=user_id)
         await message.answer(f"qancha suma kirit moqchisiz oldingi sumasi {useri.hisob}")
@@ -262,52 +287,59 @@ async def foydalanuvchilar(message: Message, state: FSMContext):
     data = await state.get_data()
     user_id = data.get("tg_idsi")
 
-    user = session.query(User).filter(User.id == user_id).first()
-    if user is None:
-        await message.answer("❌ Bu ID bo'yicha foydalanuvchi bazadan topilmadi!")
-        await state.clear()
-        return
+    async with async_session() as session:
+        result = await session.execute(select(User).filter(User.id == user_id))
+        user = result.scalar_one_or_none()
 
-    try:
-        current_hisob = int(user.hisob) if user.hisob is not None else 0
-    except (ValueError, TypeError):
-        current_hisob = 0
+        if user is None:
+            await message.answer("❌ Bu ID bo'yicha foydalanuvchi bazadan topilmadi!")
+            await state.clear()
+            return
 
-    user.hisob = current_hisob + suma
-    session.commit()
+        try:
+            current_hisob = int(user.hisob) if user.hisob is not None else 0
+        except (ValueError, TypeError):
+            current_hisob = 0
 
-    if suma < 0:
-        await message.answer(
-            f"✅ Muvaffaqiyatli! Foydalanuvchi hisobidan <b>{abs(suma)}</b> so'm ayrildi.\n💳 Yangi balans: <b>{user.hisob}</b> so'm",
-            parse_mode="HTML")
-    else:
-        await message.answer(
-            f"✅ Muvaffaqiyatli! Foydalanuvchi hisobiga <b>{suma}</b> so'm qo'shildi.\n💳 Yangi balans: <b>{user.hisob}</b> so'm",
-            parse_mode="HTML")
+        user.hisob = current_hisob + suma
+        await session.commit()
+
+        if suma < 0:
+            await message.answer(
+                f"✅ Muvaffaqiyatli! Foydalanuvchi hisobidan <b>{abs(suma)}</b> so'm ayrildi.\n💳 Yangi balans: <b>{user.hisob}</b> so'm",
+                parse_mode="HTML")
+        else:
+            await message.answer(
+                f"✅ Muvaffaqiyatli! Foydalanuvchi hisobiga <b>{suma}</b> so'm qo'shildi.\n💳 Yangi balans: <b>{user.hisob}</b> so'm",
+                parse_mode="HTML")
 
     await state.clear()
 
 
-
 from keyboards.default.cencel import cencel_but
+
+
 @router.message(F.text == "Habar yuborish")
-async def send_message(message:Message, state:FSMContext):
+async def send_message(message: Message, state: FSMContext):
     if message.from_user.id in ADMINS:
         await state.set_state(Send_m.mess)
-        await message.answer(f"Userlarga yubormoqchi bolgan xabaringizni kiriting ✍🏻",reply_markup=cencel_but)
+        await message.answer(f"Userlarga yubormoqchi bolgan xabaringizni kiriting ✍🏻", reply_markup=cencel_but)
 
 
 @router.message(F.text == "Bekor qilish ❌")
-async def send_message(message:Message, state:FSMContext):
+async def send_message(message: Message, state: FSMContext):
     if message.from_user.id in ADMINS:
         await state.clear()
-        await message.answer("Bekor qilinid ✅",reply_markup=admin_k)
+        await message.answer("Bekor qilinid ✅", reply_markup=admin_k)
+
 
 @router.message(Send_m.mess)
-async def send_message(message:Message, state:FSMContext):
+async def send_message(message: Message, state: FSMContext):
 
-    user_ids = session.query(User.id).all()
-    user_id_list = [user_id for (user_id,) in user_ids]
+    async with async_session() as session:
+        result = await session.execute(select(User.id))
+        user_id_list = result.scalars().all()
+
     secces = 0
     blocked = 0
     for user_id in user_id_list:
@@ -320,5 +352,6 @@ async def send_message(message:Message, state:FSMContext):
 
     await state.clear()
 
-
-    await message.answer(f"Xabaringiz muvafiyaqiyatlik yuborilindi jami yuborilinganlar - {secces}, yuborilmadi - {blocked}",reply_markup=admin_k)
+    await message.answer(
+        f"Xabaringiz muvafiyaqiyatlik yuborilindi jami yuborilinganlar - {secces}, yuborilmadi - {blocked}",
+        reply_markup=admin_k)

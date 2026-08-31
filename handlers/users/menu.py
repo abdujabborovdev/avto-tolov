@@ -1,26 +1,32 @@
-from aiogram import Router,F
+
+from aiogram import Router, F
 
 from aiogram.types import Message, CallbackQuery
 
+from sqlalchemy import select
 from keyboards.inline.nomer import generate_countries_keyboard, number_ols
 from keyboards.inline.support import support
 from keyboards.inline.create_key import create_key, secret_key_inb
-from keyboards.inline.tolov import tolov_qilish,tolov_tur
-from utils.db_api.create_user import *
+from keyboards.inline.tolov import tolov_qilish, tolov_tur
+from utils.db_api.create_user import *  # async_session, User, Numbers_list, Order_numbers, SecretApiKey va h.k.
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 router = Router()
 
-@router.message((F.text=='Kabinet') | (F.text == '/balance'))
-async def menu(message:Message):
-    user = session.get(User, message.from_user.id)
+
+@router.message((F.text == 'Kabinet') | (F.text == '/balance'))
+async def menu(message: Message):
+    async with async_session() as session:
+        user = await session.get(User, message.from_user.id)
+
     await message.answer(f"""<b><tg-emoji emoji-id='5442804194983554178'>📁</tg-emoji> Kabinet ID:</b> <code>{user.id} </code>
 
-<b><tg-emoji emoji-id='5443008004066651784'>💳</tg-emoji> Hisobingiz:</b>{user.hisob}  so'm""",reply_markup=tolov_qilish,parse_mode='HTML')
+<b><tg-emoji emoji-id='5443008004066651784'>💳</tg-emoji> Hisobingiz:</b>{user.hisob}  so'm""", reply_markup=tolov_qilish, parse_mode='HTML')
 
 
-@router.message((F.text=='Nomer olish') | (F.text=='/buy_number'))
-async def menu(message:Message):
+@router.message((F.text == 'Nomer olish') | (F.text == '/buy_number'))
+async def menu(message: Message):
     await message.answer(f"""📶 <b>Tayyor Telegram akkauntlar</b> — bu oldindan ro‘yxatdan o‘tgan, ishlashga tayyor akkauntlar bo‘lib, sizga doimiy foydalanish uchun taqdim etiladi.
 
 <b>📌 Ishlash tartibi:</b>
@@ -31,40 +37,54 @@ async def menu(message:Message):
 5️⃣ Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.
 
 
-✅ Barcha ma’lumotlarni o‘qib chiqqan bo‘lsangiz, “Tushundim” tugmasini bosing.""",reply_markup=number_ols,parse_mode='HTML')
+✅ Barcha ma’lumotlarni o‘qib chiqqan bo‘lsangiz, “Tushundim” tugmasini bosing.""", reply_markup=number_ols, parse_mode='HTML')
+
 
 @router.callback_query(F.data == 'nomer_ol')
-async def raqam_olish(call:CallbackQuery):
-    countries = session.query(Numbers_list.id, Numbers_list.country, Numbers_list.price).all()
+async def raqam_olish(call: CallbackQuery):
+    async with async_session() as session:
+        result = await session.execute(
+            select(Numbers_list.id, Numbers_list.country, Numbers_list.price)
+        )
+        countries = result.all()
+
     keyboard = generate_countries_keyboard(countries)
     await call.message.edit_text(f"""🌐 Eng arzonidan boshlab davlatlar ro'yxati
 
-""",reply_markup=keyboard,parse_mode='HTML')
+""", reply_markup=keyboard, parse_mode='HTML')
+
 
 @router.callback_query(F.data == 'tolov_otish')
-async def tolov_turi(call:CallbackQuery):
-    await call.message.answer("🗃️ Kerakli to’lov tizimini tanlang:",reply_markup=tolov_tur)
+async def tolov_turi(call: CallbackQuery):
+    await call.message.answer("🗃️ Kerakli to’lov tizimini tanlang:", reply_markup=tolov_tur)
 
 
 @router.callback_query(F.data.startswith("countries_page:"))
-async def tolov_turi(call:CallbackQuery):
+async def tolov_turi(call: CallbackQuery):
     page = int(call.data.split(":")[1])
 
-    countries = session.query(Numbers_list.id, Numbers_list.country, Numbers_list.price).all()
+    async with async_session() as session:
+        result = await session.execute(
+            select(Numbers_list.id, Numbers_list.country, Numbers_list.price)
+        )
+        countries = result.all()
 
     keyboard = generate_countries_keyboard(countries, page=page)
-    await call.message.edit_text("🌍 Kerakli davlatni tanlang:",reply_markup=keyboard)
-
-@router.message((F.text=='Pul kiritish') | (F.text=='/deposit'))
-async def menu(message:Message):
-    await message.answer("🗃️ Kerakli to’lov tizimini tanlang:",reply_markup=tolov_tur)
+    await call.message.edit_text("🌍 Kerakli davlatni tanlang:", reply_markup=keyboard)
 
 
-
-
-@router.message((F.text == 'Nomerlarim') | (F.text=='/my_numbers'))
+@router.message((F.text == 'Pul kiritish') | (F.text == '/deposit'))
 async def menu(message: Message):
-    nomerlar = session.query(Order_numbers).filter(Order_numbers.owner_number == message.from_user.id).all()
+    await message.answer("🗃️ Kerakli to’lov tizimini tanlang:", reply_markup=tolov_tur)
+
+
+@router.message((F.text == 'Nomerlarim') | (F.text == '/my_numbers'))
+async def menu(message: Message):
+    async with async_session() as session:
+        result = await session.execute(
+            select(Order_numbers).filter(Order_numbers.owner_number == message.from_user.id)
+        )
+        nomerlar = result.scalars().all()
 
     if not nomerlar:
         await message.answer("❌ Sizda hozircha sotib olingan raqamlar yo'q.")
@@ -84,7 +104,10 @@ async def menu(message: Message):
 @router.callback_query(F.data.startswith("nomer_info_"))
 async def nomer_detail(call: CallbackQuery):
     nomer_id = int(call.data.split("_")[2])
-    nomer = session.query(Order_numbers).filter(Order_numbers.id == nomer_id).first()
+
+    async with async_session() as session:
+        result = await session.execute(select(Order_numbers).filter(Order_numbers.id == nomer_id))
+        nomer = result.scalar_one_or_none()
 
     if not nomer:
         await call.answer("❌ Bu raqam bazadan topilmadi!", show_alert=True)
@@ -107,7 +130,10 @@ async def nomer_detail(call: CallbackQuery):
 @router.callback_query(F.data.startswith("nomer_info_"))
 async def nomer_detail(call: CallbackQuery):
     nomer_id = int(call.data.split("_")[2])
-    nomer = session.query(Order_numbers).filter(Order_numbers.id == nomer_id).first()
+
+    async with async_session() as session:
+        result = await session.execute(select(Order_numbers).filter(Order_numbers.id == nomer_id))
+        nomer = result.scalar_one_or_none()
 
     if not nomer:
         await call.answer("❌ Bu raqam bazadan topilmadi!", show_alert=True)
@@ -127,7 +153,7 @@ async def nomer_detail(call: CallbackQuery):
     await call.answer()
 
 
-@router.message((F.text == 'Support') | (F.text=='/support'))
+@router.message((F.text == 'Support') | (F.text == '/support'))
 async def menu(message: Message):
 
     await message.answer("""<b>🆘 SUPPORT – Qo‘llab-quvvatlash xizmati</b>
@@ -136,7 +162,7 @@ Savollaringiz yoki muammolaringiz bormi? Biz sizga tez va samarali yordam berami
                          reply_markup=support, parse_mode='HTML')
 
 
-@router.message((F.text=='Qolanma') | (F.text=='/faq'))
+@router.message((F.text == 'Qolanma') | (F.text == '/faq'))
 async def qolanma(messege: Message):
     await messege.answer(f"""📖 <b>Botdan foydalanish bo'yicha qo'llanma
 
@@ -144,27 +170,32 @@ Hurmatli foydalanuvchi! Botimiz orqali virtual raqamlar sotib olish va ularga ke
 
 💳 <b>1. Hisobni to'ldirish:</b>
 <blockquote expandable>• Asosiy menyudan <b>"Pul kitish"</b>  bo'limini tanlab, to'lov tizimi (Click, Payme va h.k.) orqali mablag' kiriting.
-• Pul avtomatik ravishda balansingizga qo'shiladi.</blockquote>
+- Pul avtomatik ravishda balansingizga qo'shiladi.</blockquote>
 
 📲 <b>2. Raqam olish va SMS kodni qabul qilish:</b>
 <blockquote expandable><b>Tayyor Telegram akkauntlar</b> — bu oldindan ro‘yxatdan o‘tgan, ishlashga tayyor akkauntlar bo‘lib, sizga doimiy foydalanish uchun taqdim etiladi.
 
 <b>📌 Ishlash tartibi:</b>
-• Bot sizga akkaunt raqamini beradi.  
-• Shu raqam orqali Telegramga kirasiz (<b>Rasmiy ko‘k Telegram ilovasidan FOYDALANMANG, norasmiy ilovalardan foydalaning</b>).  
-• Telegram kod so‘raganda “<b>📲SMS olish</b>” tugmasini bosing va kuting.  
-• 1 daqiqa ichida sizga kirish kodi va 2 bosqichli parol taqdim etiladi.  
-• Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.</blockquote>
+- Bot sizga akkaunt raqamini beradi.  
+- Shu raqam orqali Telegramga kirasiz (<b>Rasmiy ko‘k Telegram ilovasidan FOYDALANMANG, norasmiy ilovalardan foydalaning</b>).  
+- Telegram kod so‘raganda “<b>📲SMS olish</b>” tugmasini bosing va kuting.  
+- 1 daqiqa ichida sizga kirish kodi va 2 bosqichli parol taqdim etiladi.  
+- Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.</blockquote>
 
-⚠️ <i>Eslatma: Agar SMS biroz kechikib kelsa, "📲 SMS olish" tugmasini bir necha soniyadan so'ng qayta bosing.</i>""",parse_mode='HTML')
-
-
+⚠️ <i>Eslatma: Agar SMS biroz kechikib kelsa, "📲 SMS olish" tugmasini bir necha soniyadan so'ng qayta bosing.</i>""", parse_mode='HTML')
 
 
-@router.message((F.text=='Hamkorlik') | (F.text=='/hamkorlik'))
+@router.message((F.text == 'Hamkorlik') | (F.text == '/hamkorlik'))
 async def hamkorlik(message: Message):
-    secret_key = session.query(SecretApiKey).filter(SecretApiKey.user_telegram_id == message.from_user.id).first()
-    user = session.query(User).filter(User.id == message.from_user.id).first()
+    async with async_session() as session:
+        result = await session.execute(
+            select(SecretApiKey).filter(SecretApiKey.user_telegram_id == message.from_user.id)
+        )
+        secret_key = result.scalar_one_or_none()
+
+        result = await session.execute(select(User).filter(User.id == message.from_user.id))
+        user = result.scalar_one_or_none()
+
     if secret_key:
         keyboard = secret_key_inb()
         await message.answer(f"""<b>⚙️ Api dokument:</b>
@@ -175,12 +206,12 @@ async def hamkorlik(message: Message):
 
 <b>🔑 Sizning API kalitingiz:</b> <code>{secret_key.secret_api_key}</code>
 
-<b>💵 Balansingiz:</b> {user.hisob} so'm""",reply_markup=keyboard)
+<b>💵 Balansingiz:</b> {user.hisob} so'm""", reply_markup=keyboard)
     else:
         owner_id = int(message.from_user.id)
         create_button = create_key(owner_id=owner_id)
         await message.answer(f"""<b>Hamkorlik dasturidan foydalanish uchun API kalit yaratishingiz kerak <tg-emoji emoji-id='5427009714745517609'>✅</tg-emoji></b>
 
 <blockquote expandable>• API kalit yaratish uchun pasdagi <b>🔑 Kalit yaratish</b> tugmasini bosing 
-• Kalitingizni boshqa odamga korsatmang va yubormang
-• Va havsiz joyda saqlang</blockquote>""",reply_markup=create_button,parse_mode='HTML')
+- Kalitingizni boshqa odamga korsatmang va yubormang
+- Va havsiz joyda saqlang</blockquote>""", reply_markup=create_button, parse_mode='HTML')
