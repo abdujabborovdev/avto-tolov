@@ -15,7 +15,23 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     Message,
 )
-from utils.db_api.create_user import SecretApiKey  # Model joylashgan yo'l
+
+from contextlib import asynccontextmanager
+from math import ceil
+
+from aiogram.filters import Filter
+from aiogram.filters.callback_data import CallbackData
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from sqlalchemy import select, func, delete as sa_delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+
+PAGE_SIZE = 10
+ADMIN_IDS = [6917400767]
+
+from utils.db_api.create_user import SecretApiKey
 router = Router()
 
 SEENSMS_KEY = SEENSMS_KEY
@@ -358,26 +374,6 @@ async def send_message(message: Message, state: FSMContext):
         reply_markup=admin_k)
 
 
-
-
-
-from contextlib import asynccontextmanager
-from math import ceil
-
-from aiogram import Router, F
-from aiogram.filters import Filter
-from aiogram.filters.callback_data import CallbackData
-from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from sqlalchemy import select, func, delete as sa_delete
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from utils.db_api.create_user import SecretApiKey
-from utils.db_api.create_user import async_session  # sessionmaker (async_sessionmaker)
-
-
-PAGE_SIZE = 10
-ADMIN_IDS = [6917400767]  # <-- o'zingizning admin ID'laringizni kiriting
 
 
 
