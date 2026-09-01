@@ -20,12 +20,12 @@ async def create_key(call: CallbackQuery):
 
     async with async_session() as session:
         result = await session.execute(select(User).filter(User.id == call.from_user.id))
-        user = result.scalar_one_or_none()
+        user = result.scalars().first()
 
         result = await session.execute(
             select(SecretApiKey).filter(SecretApiKey.user_telegram_id == user_tg_id)
         )
-        secret_keys = result.scalar_one_or_none()
+        secret_keys = result.scalars().first()
 
         user_hisob = user.hisob if user else 0
 

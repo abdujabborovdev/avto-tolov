@@ -15,6 +15,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     Message,
 )
+from utils.db_api.create_user import SecretApiKey  # Model joylashgan yo'l
 router = Router()
 
 SEENSMS_KEY = SEENSMS_KEY
@@ -355,3 +356,93 @@ async def send_message(message: Message, state: FSMContext):
     await message.answer(
         f"Xabaringiz muvafiyaqiyatlik yuborilindi jami yuborilinganlar - {secces}, yuborilmadi - {blocked}",
         reply_markup=admin_k)
+
+
+@router.message(F.text == "Apilar")
+async def show_api_keys(message: Message, session):
+    await send_api_keys_page(message, session, page=0)
+
+
+async def send_api_keys_page(message_or_callback, session, page: int, edit: bool = False):
+    result = await session.execute(select(SecretApiKey))
+    keys = result.scalars().all()
+
+    if not keys:
+        text = "Bazada hali hech qanday API kalit topilmadi."
+        if edit:
+            await message_or_callback.message.edit_text(text)
+        else:
+            await message.answer(text)
+        return
+
+    total_keys = len(keys)
+    PER_PAGE = 10
+    start = page * PER_PAGE
+    end = start + PER_PAGE
+    current_keys = keys[start:end]
+
+    keyboard = []
+    for index, item in enumerate(current_keys, start=start + 1):
+        short_key = f"{item.secret_api_key[:10]}..."
+        keyboard.append([
+            InlineKeyboardButton(
+                text=f"{index}. ID: {item.user_telegram_id} | {short_key}",
+                callback_data=f"apikey_info:{item.id}",
+            )
+        ])
+
+    nav_buttons = []
+    if page > 0:
+        nav_buttons.append(
+            InlineKeyboardButton(text="⬅️ Orqaga", callback_data=f"apikey_page:{page - 1}")
+        )
+    if end < total_keys:
+        nav_buttons.append(
+            InlineKeyboardButton(text="Keyingisi ➡️", callback_data=f"apikey_page:{page + 1}")
+        )
+
+    if nav_buttons:
+        keyboard.append(nav_buttons)
+
+    markup = InlineKeyboardMarkup(inline_keyboard=keyboard)
+    text = f"📋 **Olingan API kalitlar ro'yxati**\nJami: {total_keys} ta\nSahifa: {page + 1}"
+
+    if edit:
+        await message_or_callback.message.edit_text(text, reply_markup=markup, parse_mode="Markdown")
+    else:
+        await message_or_callback.answer(text, reply_markup=markup, parse_mode="Markdown")
+
+
+@router.callback_query(F.data.startswith("apikey_page:"))
+async def paginate_api_keys(call: CallbackQuery, session):
+    page = int(call.data.split(":")[1])
+    await send_api_keys_page(call, session, page=page, edit=True)
+    await call.answer()
+
+
+@router.callback_query(F.data.startswith("apikey_info:"))
+async def api_key_detail(call: CallbackQuery, session):
+    key_id = int(call.data.split(":")[1])
+
+    result = await session.execute(select(SecretApiKey).filter(SecretApiKey.id == key_id))
+    api_key_obj = result.scalars().first()
+
+    if not api_key_obj:
+        await call.answer("Bunday API kalit topilmadi!", show_alert=True)
+        return
+
+    info_text = (
+        f"🔑 **API Kalit Ma'lumotlari:**\n\n"
+        f"🆔 **ID:** `{api_key_obj.id}`\n"
+        f"👤 **Telegram User ID:** `{api_key_obj.user_telegram_id}`\n"
+        f"🔐 **Secret API Key:** `{api_key_obj.secret_api_key}`"
+    )
+
+    back_keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🔙 Ro'yxatga qaytish", callback_data="apikey_page:0")]
+        ]
+    )
+
+    await call.message.edit_text(info_text, reply_markup=back_keyboard, parse_mode="Markdown")
+    await call.answer()
