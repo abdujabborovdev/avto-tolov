@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from utils.db_api.create_user import SecretApiKey
 from utils.db_api.create_user import async_session  # sessionmaker (async_sessionmaker)
 
-router = Router(name="admin_api_keys")
+router = Router()
 
 PAGE_SIZE = 10
 ADMIN_IDS = [123456789]  # <-- o'zingizning admin ID'laringizni kiriting
