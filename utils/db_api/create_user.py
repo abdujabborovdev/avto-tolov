@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import String, Integer, BigInteger, DateTime, Column
+from sqlalchemy import String, Integer, BigInteger, DateTime, Column,Boolean
 from data.config import *
 DB_KEY = DB_KEY
 
@@ -46,6 +46,7 @@ class SecretApiKey(Base):
     id = Column(Integer, primary_key=True)
     user_telegram_id = Column(BigInteger, nullable=False)
     secret_api_key = Column(String(115), unique=True, nullable=False, index=True)
+    is_blocked = Column(Boolean, default=False)
 
 engine = create_async_engine(DB_KEY, echo=True)
 
