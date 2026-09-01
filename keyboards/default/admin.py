@@ -17,7 +17,8 @@ admin_k = ReplyKeyboardMarkup(keyboard=[
 
     ],
     [
-        KeyboardButton(text='Habar yuborish')
+        KeyboardButton(text='Habar yuborish'),
+        KeyboardButton(text='Apilar'),
     ]
 
 ],resize_keyboard=True)

@@ -372,7 +372,7 @@ async def send_api_keys_page(message_or_callback, session, page: int, edit: bool
         if edit:
             await message_or_callback.message.edit_text(text)
         else:
-            await message.answer(text)
+            await message_or_callback.answer(text)
         return
 
     total_keys = len(keys)
@@ -383,7 +383,7 @@ async def send_api_keys_page(message_or_callback, session, page: int, edit: bool
 
     keyboard = []
     for index, item in enumerate(current_keys, start=start + 1):
-        short_key = f"{item.secret_api_key[:10]}..."
+        short_key = f"{item.secret_api_key[:15]}..."
         keyboard.append([
             InlineKeyboardButton(
                 text=f"{index}. ID: {item.user_telegram_id} | {short_key}",
@@ -428,7 +428,7 @@ async def api_key_detail(call: CallbackQuery, session):
     api_key_obj = result.scalars().first()
 
     if not api_key_obj:
-        await call.answer("Bunday API kalit topilmadi!", show_alert=True)
+        await call.answer("Bunday API kalit topilmadi yoki allaqachon o'chirilgan!", show_alert=True)
         return
 
     info_text = (
@@ -438,11 +438,29 @@ async def api_key_detail(call: CallbackQuery, session):
         f"🔐 **Secret API Key:** `{api_key_obj.secret_api_key}`"
     )
 
-    back_keyboard = InlineKeyboardMarkup(
+    keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
+            [InlineKeyboardButton(text="🗑 Kalitni o'chirish", callback_data=f"apikey_del:{api_key_obj.id}")],
             [InlineKeyboardButton(text="🔙 Ro'yxatga qaytish", callback_data="apikey_page:0")]
         ]
     )
 
-    await call.message.edit_text(info_text, reply_markup=back_keyboard, parse_mode="Markdown")
+    await call.message.edit_text(info_text, reply_markup=keyboard, parse_mode="Markdown")
     await call.answer()
+
+
+@router.callback_query(F.data.startswith("apikey_del:"))
+async def delete_api_key(call: CallbackQuery, session):
+    key_id = int(call.data.split(":")[1])
+
+    result = await session.execute(select(SecretApiKey).filter(SecretApiKey.id == key_id))
+    api_key_obj = result.scalars().first()
+
+    if api_key_obj:
+        await session.delete(api_key_obj)
+        await session.commit()
+        await call.answer("API kalit muvaffaqiyatli o'chirildi! 🗑", show_alert=True)
+    else:
+        await call.answer("Bunday kalit topilmadi.", show_alert=True)
+
+    await send_api_keys_page(call, session, page=0, edit=True)
