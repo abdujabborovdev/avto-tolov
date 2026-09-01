@@ -66,6 +66,15 @@ async def update_key(call: CallbackQuery):
 
 
         user_hisob = user.hisob if user else 0
+
+        result = await session.execute(
+            select(SecretApiKey).filter(SecretApiKey.user_telegram_id == user.id)
+        )
+        secret_key_del = result.scalars().first()
+
+        if secret_key_del:
+            await session.delete(user)
+            await session.commit()
         new_key = SecretApiKey(user_telegram_id=call.from_user.id, secret_api_key=secret_key)
         session.add(new_key)
         await session.commit()
