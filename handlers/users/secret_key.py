@@ -23,7 +23,7 @@ async def create_key(call: CallbackQuery):
         user = result.scalar_one_or_none()
 
         result = await session.execute(
-            select(SecretApiKey).filter(SecretApiKey.user_telegram_id == call.from_user.id)
+            select(SecretApiKey).filter(SecretApiKey.user_telegram_id == user_tg_id)
         )
         secret_keys = result.scalar_one_or_none()
 
@@ -54,3 +54,30 @@ async def create_key(call: CallbackQuery):
                 )
             except TelegramBadRequest:
                 pass
+
+
+@router.callback_query(F.data.startswith("updatekey"))
+async def update_key(call: CallbackQuery):
+    await call.answer()
+    secret_key = secrets.token_hex(16)
+    async with async_session() as session:
+        result = await session.execute(select(User).filter(User.id == call.from_user.id))
+        user = result.scalar_one_or_none()
+
+
+        user_hisob = user.hisob if user else 0
+        new_key = SecretApiKey(user_telegram_id=call.from_user.id, secret_api_key=secret_key)
+        session.add(new_key)
+        await session.commit()
+
+        keyboard = secret_key_inb()
+        await call.message.edit_text(f"""<b>Muvafiyaqiyatlik kalit yangilish <tg-emoji emoji-id='5370870691140737817'>🥳</tg-emoji>
+
+        ⚙️ Api dokument:
+        🔗 https://xbomer.uz/api/
+
+        🔑 Ilk Api xizmat:
+        🔗 https://xbomer.uz/api/v1
+
+        🔑 Sizning API kalitingiz: <code>{secret_key}</code>
+        💵 Balansingiz:  {user_hisob} so'm </b>""", parse_mode="html", reply_markup=keyboard)
