@@ -18,7 +18,7 @@ from utils.db_api.create_user import async_session  # sessionmaker (async_sessio
 router = Router()
 
 PAGE_SIZE = 10
-ADMIN_IDS = [123456789]  # <-- o'zingizning admin ID'laringizni kiriting
+ADMIN_IDS = [6917400767]  # <-- o'zingizning admin ID'laringizni kiriting
 
 
 # ==========================================================
