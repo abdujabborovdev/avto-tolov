@@ -359,11 +359,13 @@ async def send_message(message: Message, state: FSMContext):
 
 
 @router.message(F.text == "Apilar")
-async def show_api_keys(message: Message, session):
+async def show_api_keys(message: Message, data: dict):
+    session = data.get("session")
     await send_api_keys_page(message, session, page=0)
 
 
 async def send_api_keys_page(message_or_callback, session, page: int, edit: bool = False):
+    # Barcha kalitlarni bazadan olish
     result = await session.execute(select(SecretApiKey))
     keys = result.scalars().all()
 
@@ -381,6 +383,7 @@ async def send_api_keys_page(message_or_callback, session, page: int, edit: bool
     end = start + PER_PAGE
     current_keys = keys[start:end]
 
+    # Inline tugmalarni yasash (Har 10 tasi bitta sahifada)
     keyboard = []
     for index, item in enumerate(current_keys, start=start + 1):
         short_key = f"{item.secret_api_key[:15]}..."
@@ -391,6 +394,7 @@ async def send_api_keys_page(message_or_callback, session, page: int, edit: bool
             )
         ])
 
+    # Oldinga / Orqaga tugmalari
     nav_buttons = []
     if page > 0:
         nav_buttons.append(
@@ -413,15 +417,19 @@ async def send_api_keys_page(message_or_callback, session, page: int, edit: bool
         await message_or_callback.answer(text, reply_markup=markup, parse_mode="Markdown")
 
 
+# 2. Sahifalash uchun handler (Oldinga / Orqaga)
 @router.callback_query(F.data.startswith("apikey_page:"))
-async def paginate_api_keys(call: CallbackQuery, session):
+async def paginate_api_keys(call: CallbackQuery, data: dict):
+    session = data.get("session")
     page = int(call.data.split(":")[1])
     await send_api_keys_page(call, session, page=page, edit=True)
     await call.answer()
 
 
+# 3. API kalit ustiga bosganda uning ma'lumotini chiqarish
 @router.callback_query(F.data.startswith("apikey_info:"))
-async def api_key_detail(call: CallbackQuery, session):
+async def api_key_detail(call: CallbackQuery, data: dict):
+    session = data.get("session")
     key_id = int(call.data.split(":")[1])
 
     result = await session.execute(select(SecretApiKey).filter(SecretApiKey.id == key_id))
@@ -438,6 +446,7 @@ async def api_key_detail(call: CallbackQuery, session):
         f"🔐 **Secret API Key:** `{api_key_obj.secret_api_key}`"
     )
 
+    # Orqaga qaytish va O'chirish tugmalari
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="🗑 Kalitni o'chirish", callback_data=f"apikey_del:{api_key_obj.id}")],
@@ -449,8 +458,10 @@ async def api_key_detail(call: CallbackQuery, session):
     await call.answer()
 
 
+# 4. API kalitni bazadan o'chirish
 @router.callback_query(F.data.startswith("apikey_del:"))
-async def delete_api_key(call: CallbackQuery, session):
+async def delete_api_key(call: CallbackQuery, data: dict):
+    session = data.get("session")
     key_id = int(call.data.split(":")[1])
 
     result = await session.execute(select(SecretApiKey).filter(SecretApiKey.id == key_id))
@@ -463,4 +474,5 @@ async def delete_api_key(call: CallbackQuery, session):
     else:
         await call.answer("Bunday kalit topilmadi.", show_alert=True)
 
+    # O'chirilgach, birinchi sahifadagi ro'yxatga qaytarish
     await send_api_keys_page(call, session, page=0, edit=True)
