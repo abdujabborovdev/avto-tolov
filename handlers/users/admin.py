@@ -476,3 +476,14 @@ async def delete_api_key(call: CallbackQuery, data: dict):
 
     # O'chirilgach, birinchi sahifadagi ro'yxatga qaytarish
     await send_api_keys_page(call, session, page=0, edit=True)
+
+
+from sqlalchemy import delete
+
+@router.message(F.text == "/clear_keys")
+async def clear_all_keys(message: Message, data: dict):
+    session = data.get("session")
+    # Bazadagi hamma secret_api_key larni o'chirish
+    await session.execute(delete(SecretApiKey))
+    await session.commit()
+    await message.answer("Barcha API kalitlar tozalandi! Endi /apilar ni ishlatsangiz xatolik bermaydi.")
