@@ -72,9 +72,9 @@ async def update_key(call: CallbackQuery):
         )
         secret_key_del = result.scalars().first()
 
-        if secret_key_del:
-            await session.delete(user)
-            await session.commit()
+
+        await session.delete(secret_key_del)
+        await session.commit()
         new_key = SecretApiKey(user_telegram_id=call.from_user.id, secret_api_key=secret_key)
         session.add(new_key)
         await session.commit()
@@ -82,11 +82,11 @@ async def update_key(call: CallbackQuery):
         keyboard = secret_key_inb()
         await call.message.edit_text(f"""<b>Muvafiyaqiyatlik kalit yangilish <tg-emoji emoji-id='5370870691140737817'>🥳</tg-emoji>
 
-        ⚙️ Api dokument:
-        🔗 https://xbomer.uz/api/
+⚙️ Api dokument:
+🔗 https://xbomer.uz/api/
 
-        🔑 Ilk Api xizmat:
-        🔗 https://xbomer.uz/api/v1
+🔑 Ilk Api xizmat:
+🔗 https://xbomer.uz/api/v1
 
-        🔑 Sizning API kalitingiz: <code>{secret_key}</code>
-        💵 Balansingiz:  {user_hisob} so'm </b>""", parse_mode="html", reply_markup=keyboard)
+🔑 Sizning API kalitingiz: <code>{secret_key}</code>
+💵 Balansingiz:  {user_hisob} so'm </b>""", parse_mode="html", reply_markup=keyboard)
