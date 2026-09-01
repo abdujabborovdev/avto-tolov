@@ -62,7 +62,7 @@ async def update_key(call: CallbackQuery):
     secret_key = secrets.token_hex(16)
     async with async_session() as session:
         result = await session.execute(select(User).filter(User.id == call.from_user.id))
-        user = result.scalar_one_or_none()
+        user = result.scalars().first()
 
 
         user_hisob = user.hisob if user else 0
@@ -75,12 +75,17 @@ async def update_key(call: CallbackQuery):
 
         await session.delete(secret_key_del)
         await session.commit()
-        new_key = SecretApiKey(user_telegram_id=call.from_user.id, secret_api_key=secret_key)
-        session.add(new_key)
-        await session.commit()
+        result = await session.execute(
+            select(SecretApiKey).filter(SecretApiKey.user_telegram_id == user.id)
+        )
+        secret_key_d = result.scalars().first()
+        if not secret_key_d:
+            new_key = SecretApiKey(user_telegram_id=call.from_user.id, secret_api_key=secret_key)
+            session.add(new_key)
+            await session.commit()
 
-        keyboard = secret_key_inb()
-        await call.message.edit_text(f"""<b>Muvafiyaqiyatlik kalit yangilish <tg-emoji emoji-id='5370870691140737817'>🥳</tg-emoji>
+            keyboard = secret_key_inb()
+            await call.message.edit_text(f"""<b>Muvafiyaqiyatlik kalit yangilish <tg-emoji emoji-id='5370870691140737817'>🥳</tg-emoji>
 
 ⚙️ Api dokument:
 🔗 https://xbomer.uz/api/
@@ -90,3 +95,6 @@ async def update_key(call: CallbackQuery):
 
 🔑 Sizning API kalitingiz: <code>{secret_key}</code>
 💵 Balansingiz:  {user_hisob} so'm </b>""", parse_mode="html", reply_markup=keyboard)
+
+        else:
+            await call.message.edit_text(f"Kalit yangilanmadi supportga murojat qiling")
