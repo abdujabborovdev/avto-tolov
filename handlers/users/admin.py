@@ -358,14 +358,26 @@ async def send_message(message: Message, state: FSMContext):
         reply_markup=admin_k)
 
 
+@router.message(F.text == "/clear_keys")
+async def clear_all_keys(message: Message):
+    if message.from_user.id in ADMINS:
+        async with async_session() as session:
+            await session.execute(delete(SecretApiKey))
+            await session.commit()
+        await message.answer("Barcha API kalitlar bazadan muvaffaqiyatli o'chirildi! 🗑")
+    else:
+        await message.answer("Bu buyruq faqat admin uchun!")
+
+
+# 2. Admin uchun API kalitlar ro'yxatini sahifalab chiqarish
 @router.message(F.text == "Apilar")
 async def show_api_keys(message: Message, data: dict):
-    session = data.get("session")
-    await send_api_keys_page(message, session, page=0)
+    if message.from_user.id in ADMINS:
+        session = data.get("session")
+        await send_api_keys_page(message, session, page=0)
 
 
 async def send_api_keys_page(message_or_callback, session, page: int, edit: bool = False):
-    # Barcha kalitlarni bazadan olish
     result = await session.execute(select(SecretApiKey))
     keys = result.scalars().all()
 
@@ -383,7 +395,6 @@ async def send_api_keys_page(message_or_callback, session, page: int, edit: bool
     end = start + PER_PAGE
     current_keys = keys[start:end]
 
-    # Inline tugmalarni yasash (Har 10 tasi bitta sahifada)
     keyboard = []
     for index, item in enumerate(current_keys, start=start + 1):
         short_key = f"{item.secret_api_key[:15]}..."
@@ -394,7 +405,6 @@ async def send_api_keys_page(message_or_callback, session, page: int, edit: bool
             )
         ])
 
-    # Oldinga / Orqaga tugmalari
     nav_buttons = []
     if page > 0:
         nav_buttons.append(
@@ -417,73 +427,69 @@ async def send_api_keys_page(message_or_callback, session, page: int, edit: bool
         await message_or_callback.answer(text, reply_markup=markup, parse_mode="Markdown")
 
 
-# 2. Sahifalash uchun handler (Oldinga / Orqaga)
+# 3. Sahifalash uchun handler (Oldinga / Orqaga)
 @router.callback_query(F.data.startswith("apikey_page:"))
 async def paginate_api_keys(call: CallbackQuery, data: dict):
-    session = data.get("session")
-    page = int(call.data.split(":")[1])
-    await send_api_keys_page(call, session, page=page, edit=True)
-    await call.answer()
+    if call.from_user.id in ADMINS:
+        session = data.get("session")
+        page = int(call.data.split(":")[1])
+        await send_api_keys_page(call, session, page=page, edit=True)
+        await call.answer()
+    else:
+        await call.answer("Bu tugma faqat admin uchun!", show_alert=True)
 
 
-# 3. API kalit ustiga bosganda uning ma'lumotini chiqarish
+# 4. API kalit ustiga bosganda uning ma'lumotini chiqarish
 @router.callback_query(F.data.startswith("apikey_info:"))
 async def api_key_detail(call: CallbackQuery, data: dict):
-    session = data.get("session")
-    key_id = int(call.data.split(":")[1])
+    if call.from_user.id in ADMINS:
+        session = data.get("session")
+        key_id = int(call.data.split(":")[1])
 
-    result = await session.execute(select(SecretApiKey).filter(SecretApiKey.id == key_id))
-    api_key_obj = result.scalars().first()
+        result = await session.execute(select(SecretApiKey).filter(SecretApiKey.id == key_id))
+        api_key_obj = result.scalars().first()
 
-    if not api_key_obj:
-        await call.answer("Bunday API kalit topilmadi yoki allaqachon o'chirilgan!", show_alert=True)
-        return
+        if not api_key_obj:
+            await call.answer("Bunday API kalit topilmadi yoki allaqachon o'chirilgan!", show_alert=True)
+            return
 
-    info_text = (
-        f"🔑 **API Kalit Ma'lumotlari:**\n\n"
-        f"🆔 **ID:** `{api_key_obj.id}`\n"
-        f"👤 **Telegram User ID:** `{api_key_obj.user_telegram_id}`\n"
-        f"🔐 **Secret API Key:** `{api_key_obj.secret_api_key}`"
-    )
+        info_text = (
+            f"🔑 **API Kalit Ma'lumotlari:**\n\n"
+            f"🆔 **ID:** `{api_key_obj.id}`\n"
+            f"👤 **Telegram User ID:** `{api_key_obj.user_telegram_id}`\n"
+            f"🔐 **Secret API Key:** `{api_key_obj.secret_api_key}`"
+        )
 
-    # Orqaga qaytish va O'chirish tugmalari
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="🗑 Kalitni o'chirish", callback_data=f"apikey_del:{api_key_obj.id}")],
-            [InlineKeyboardButton(text="🔙 Ro'yxatga qaytish", callback_data="apikey_page:0")]
-        ]
-    )
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="🗑 Kalitni o'chirish", callback_data=f"apikey_del:{api_key_obj.id}")],
+                [InlineKeyboardButton(text="🔙 Ro'yxatga qaytish", callback_data="apikey_page:0")]
+            ]
+        )
 
-    await call.message.edit_text(info_text, reply_markup=keyboard, parse_mode="Markdown")
-    await call.answer()
+        await call.message.edit_text(info_text, reply_markup=keyboard, parse_mode="Markdown")
+        await call.answer()
+    else:
+        await call.answer("Bu amalni bajarish huquqingiz yo'q!", show_alert=True)
 
 
-# 4. API kalitni bazadan o'chirish
+# 5. API kalitni bazadan o'chirish
 @router.callback_query(F.data.startswith("apikey_del:"))
 async def delete_api_key(call: CallbackQuery, data: dict):
-    session = data.get("session")
-    key_id = int(call.data.split(":")[1])
+    if call.from_user.id in ADMINS:
+        session = data.get("session")
+        key_id = int(call.data.split(":")[1])
 
-    result = await session.execute(select(SecretApiKey).filter(SecretApiKey.id == key_id))
-    api_key_obj = result.scalars().first()
+        result = await session.execute(select(SecretApiKey).filter(SecretApiKey.id == key_id))
+        api_key_obj = result.scalars().first()
 
-    if api_key_obj:
-        await session.delete(api_key_obj)
-        await session.commit()
-        await call.answer("API kalit muvaffaqiyatli o'chirildi! 🗑", show_alert=True)
+        if api_key_obj:
+            await session.delete(api_key_obj)
+            await session.commit()
+            await call.answer("API kalit muvaffaqiyatli o'chirildi! 🗑", show_alert=True)
+        else:
+            await call.answer("Bunday kalit topilmadi.", show_alert=True)
+
+        await send_api_keys_page(call, session, page=0, edit=True)
     else:
-        await call.answer("Bunday kalit topilmadi.", show_alert=True)
-
-    # O'chirilgach, birinchi sahifadagi ro'yxatga qaytarish
-    await send_api_keys_page(call, session, page=0, edit=True)
-
-
-from sqlalchemy import delete
-
-@router.message(F.text == "/clear_keys")
-async def clear_all_keys(message: Message, data: dict):
-    session = data.get("session")
-    # Bazadagi hamma secret_api_key larni o'chirish
-    await session.execute(delete(SecretApiKey))
-    await session.commit()
-    await message.answer("Barcha API kalitlar tozalandi! Endi /apilar ni ishlatsangiz xatolik bermaydi.")
+        await call.answer("Bu amalni bajarish huquqingiz yo'q!", show_alert=True)
