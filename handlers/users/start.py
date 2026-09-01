@@ -19,7 +19,7 @@ async def bot_start(message: Message):
         user = result.scalar_one_or_none()
 
         if user:
-            await message.answer(f"""<b>👋 Assalomu alaykum X BOMER | foydalanuvchisi !</b>
+            await message.answer(f"""<b>👋 Assalomu alaykum xbomer.uz | foydalanuvchisi !</b>
 
 <b>🚀 Ushbu bot sizga Telegram tarmoqlari uchun ishonchli va kafolatliy  TG profil xizmatlarini taklif etadi!
 💫Bizning botimizga obuna bo'ling va do'stlaringiz bilan baham ko'ring
@@ -34,7 +34,7 @@ async def bot_start(message: Message):
             session.add(new_user)
             await session.commit()
 
-            await message.answer(f"""<b>👋 Assalomu alaykum X BOMER | foydalanuvchisi !
+            await message.answer(f"""<b>👋 Assalomu alaykum xbomer.uz | foydalanuvchisi !
 
 🤖 Bizning nakrutka botimizga xush kelibsiz: 👇
 Ijtimoiy tarmoqlar</b> <i>( Telegram, Instagram, Tiktok va Youtube ) uchun obunachi, like, ko'rishlar hamda reaksiyalarni ko'paytirishingiz mumkin</i>
