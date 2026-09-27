@@ -53,7 +53,12 @@ async def summa(message: Message, state: FSMContext):
                 params=payload,
         ) as r:
             data = await r.json()
+    print("API Response:", data)  # Log uchun ko'rib olishga yordam beradi
 
+
+    if not isinstance(data, dict):
+        await message.answer("❌ To'lov tizimidan noto'g'ri javob keldi!")
+        return
 
     url = data.get('payurl')
 
@@ -64,6 +69,10 @@ async def summa(message: Message, state: FSMContext):
     tolov_id =  data.get('order')
     summa = data.get("amount")
     telegram_id = message.from_user.id
+    if not url or not tolov_id:
+        error_msg = data.get('message', "Noma'lum xatolik")
+        await message.answer(f"❌ To'lov havolasini olishda xatolik yuz berdi!\nSabab: {error_msg}")
+        return
 
     keyboard_tolov = get_payment_keyboard(pay_url=url, order_id=tolov_id, telegram_id=telegram_id, summasi=summa)
 
