@@ -6,12 +6,8 @@ tolov_qilish = InlineKeyboardMarkup(inline_keyboard=[
 
 tolov_tur = InlineKeyboardMarkup(inline_keyboard=[
     [
-        InlineKeyboardButton(text='Payme.uz [avto]',callback_data='tolov_qilish',icon_custom_emoji_id='5287364801645796685'),
-
+        InlineKeyboardButton(text='Bank karta [avto]',callback_data='tolov_qilish',icon_custom_emoji_id='5305525714374645893'),
     ],
-    [
-        InlineKeyboardButton(text='Click.uz [avto]',callback_data='tolov_qilish',icon_custom_emoji_id='5348031828882111307')
-     ],
     [
         InlineKeyboardButton(text='Admin orqali',url='https://t.me/itredr',icon_custom_emoji_id='5190498849440931467')
     ]
