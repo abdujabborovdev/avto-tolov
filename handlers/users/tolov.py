@@ -76,13 +76,16 @@ async def summa(message: Message, state: FSMContext):
 
     keyboard_tolov = get_payment_keyboard(pay_url=url, order_id=tolov_id, telegram_id=telegram_id, summasi=summa)
 
-    await message.answer(text=f"""⚠️ To'lov to'langandan keyin <b>✅ To'lov qildim</b> tugmasini bosing, bot balansiga avtomatik tashlab beriladi. 
+    await message.answer(text=f"""<blockquote expandable>🔰 Etibor bering siz kiritgan summa emas bot bergan summani o'tkazing ❗️,
+Aks holda tolov tasdiqlanmasligi mumkun 📵
+O'tkazilgan summa toliq balansingizga tushadi ✅<blockquote>
 
-<b>💳 To'lov midori:</b> {summa} so'm
+<b>💳 To'lov midori:</b> <code>{summa}</code> so'm
 
 <b>Buyurtma raqami:</b> <code>{tolov_id}</code>
 
-<b>Xatolik roy bersa:</b> @itredr""", reply_markup=keyboard_tolov, parse_mode='HTML')
+⚠️ To'lov to'langandan keyin <b>✅ To'lov qildim</b> tugmasini bosing,   
+""", reply_markup=keyboard_tolov, parse_mode='HTML')
 
     async with async_session() as session:
         new_order_pay = Transaction(order_id=tolov_id, telegram_id=telegram_id, summa=summa)
