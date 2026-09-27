@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from utils.db_api.create_user import init_db # init_db ni import qilasiz
+from utils.db_api.create_user import init_db
 from loader import bot, dp
 import middlewares, filters, handlers
 from utils.notify_admins import on_startup_notify

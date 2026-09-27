@@ -15,6 +15,8 @@ INPAY_ID = os.getenv("INPAY_ID")
 INPAY_TOKEN = os.getenv("INPAY_TOKEN")
 SEENSMS_KEY = os.getenv('SEENSMS_KEY')
 DB_KEY = os.getenv('DB_KEY')
+SHOP_ID = os.getenv('SHOP_ID')
+SHOP_KEY = os.getenv('SHOP_KEY')
 if isinstance(ADMINS, (list, tuple)):
     ADMINS = [int(i) for i in ADMINS]
 else:

@@ -8,34 +8,12 @@ from utils.db_api.create_user import *  # async_session, User, Transaction va h.
 import aiohttp
 from states.tolov_qilish import Tolov_qilish
 from keyboards.inline.tolov import *
-from data.config import INPAY_TOKEN, INPAY_ID, ADMINS
+from data.config import *
 
 router = Router()
 _cached_bearer = None
 _cashed_time = 0
 
-
-async def cached_bearer():
-    global _cached_bearer, _cashed_time
-    hozirgi = time.time()
-    yigirma_soat = 20 * 3600
-
-    if not _cached_bearer or (hozirgi - _cashed_time) >= yigirma_soat:
-        async with aiohttp.ClientSession() as sess:
-            async with sess.post(
-                "https://inpay.uz/api/v1/authorization/",
-                params={"merchant_id": INPAY_ID, "merchant_token": INPAY_TOKEN},
-                headers={"Accept": "application/json"},
-                timeout=10,
-            ) as r:
-                data = await r.json()
-        if not data.get("success"):
-            raise RuntimeError(f"Auth xatosi: {data}")
-
-        _cached_bearer = data.get("bearer_token")
-        _cashed_time = hozirgi
-
-    return _cached_bearer
 
 
 @router.callback_query(F.data == "tolov_qilish")
@@ -54,36 +32,42 @@ async def summa(message: Message, state: FSMContext):
             return
         await state.update_data(summa=user_summa)
     except ValueError:
-        await message.answer("⚠️ Xatolik: Iltimos, faqat raqam ko'rinishida kiriting (masalan: 10000)")
+        await message.answer("⚠️ Xatolik: Iltimos, faqat raqam ko'rinishida kiriting (masalan: 1000)")
         return
 
     data = await state.get_data()
-    summa = data.get("summa")
+    summa = int(data.get("summa"))
     await state.clear()
 
-    bearer_token = await cached_bearer()
     payload = {
-        "merchant_id": INPAY_ID,
-        "token": INPAY_TOKEN,
-        "amount": summa,
-        "description": f"{message.from_user.id}",
+        "method": "create",
+        "shop_id": SHOP_ID,
+    "shop_key": SHOP_KEY,
+    "amount": summa,
+        "payurl": "true",
     }
 
     async with aiohttp.ClientSession() as sess:
-        async with sess.post(
-            "https://inpay.uz/api/v1/create/",
-            json=payload,
-            headers={"Authorization": f"Bearer {bearer_token}"},
-            timeout=15,
+        async with sess.get(
+                "https://checkcard.uz/api",
+                params=payload,
         ) as r:
             data = await r.json()
-    url = data.get('pay_url')
-    tolov_id = data.get('order_id')
+
+
+    url = data.get('payurl')
+
+
+    if not url:
+        await message.answer("❌ To'lov havolasini olishda xatolik yuz berdi!")
+        return
+    tolov_id =  data.get('order')
+    summa = data.get("amount")
     telegram_id = message.from_user.id
 
     keyboard_tolov = get_payment_keyboard(pay_url=url, order_id=tolov_id, telegram_id=telegram_id, summasi=summa)
 
-    await message.answer(f"""⚠️ To'lov to'langandan keyin <b>✅ To'lov qildim</b> tugmasini bosing, bot balansiga avtomatik tashlab beriladi. 
+    await message.answer(text=f"""⚠️ To'lov to'langandan keyin <b>✅ To'lov qildim</b> tugmasini bosing, bot balansiga avtomatik tashlab beriladi. 
 
 <b>💳 To'lov midori:</b> {summa} so'm
 
@@ -95,6 +79,8 @@ async def summa(message: Message, state: FSMContext):
         new_order_pay = Transaction(order_id=tolov_id, telegram_id=telegram_id, summa=summa)
         session.add(new_order_pay)
         await session.commit()
+
+
 
 
 active_checks = set()
@@ -115,7 +101,7 @@ async def check_pay(call: CallbackQuery):
 
         data_parts = call.data.split(":")
         if len(data_parts) < 4:
-            await call.message.answer("⚠️ Xatolik: Ma'lumotlar yetarli emas.\n\n<b>Xatolik roy bersa:</b> @itredr",
+            await call.message.answer("⚠️ Xatolik: Ma'lumotlar yetarli emas.\n\n<b>Xatolik roy bersa:</b> @biloliddinabdujabborov",
                                       parse_mode='HTML')
             return
 
@@ -124,15 +110,21 @@ async def check_pay(call: CallbackQuery):
         summa = int(data_parts[3])
 
         if not order_id:
-            await call.message.answer("❌ Order ID topilmadi.\n\n<b>Xatolik roy bersa:</b> @itredr", parse_mode='HTML')
+            await call.message.answer("❌ Order ID topilmadi.\n\n<b>Xatolik roy bersa:</b> @biloliddinabdujabborov", parse_mode='HTML')
             return
 
-        url = f"https://inpay.uz/api/v1/transactions/?order_id={order_id}"
-        headers = {"Accept": "application/json"}
+        payload = {
+            "method": "check",
+            "order":order_id,
+        }
 
         async with aiohttp.ClientSession() as sess:
-            async with sess.post(url, headers=headers) as response:
-                data = await response.json()
+            async with sess.get(
+                    "https://checkcard.uz/api",
+                    params=payload,
+            ) as r:
+                data = await r.json()
+        print(data)
 
         try:
             status = data.get("data", {}).get("status") or data.get("status", "pending")
@@ -145,9 +137,9 @@ async def check_pay(call: CallbackQuery):
             )
             tranzaksiya = result.scalar_one_or_none()
 
-            if tranzaksiya and tranzaksiya.holat == "success":
+            if tranzaksiya and tranzaksiya.holat == "paid":
                 await call.message.answer(
-                    "✅ Bu to'lov muvaffaqiyatli amalga oshirilgan!\n\n<b>Xatolik roy bersa:</b> @itredr",
+                    "✅ Bu to'lov muvaffaqiyatli amalga oshirilgan!\n\n<b>Xatolik roy bersa:</b> @biloliddinabdujabborov",
                     parse_mode='HTML')
                 return
 
@@ -164,17 +156,14 @@ async def check_pay(call: CallbackQuery):
 
             await session.commit()
 
-            if status == "success":
+            if status == "paid":
                 result = await session.execute(select(User).filter(User.id == telegram_id))
                 user = result.scalar_one_or_none()
 
                 if user:
-                    if tranzaksiya.holat == 'success':
-                        pass
-
                     current_hisob = int(user.hisob) if user.hisob else 0
                     user.hisob = current_hisob + summa
-                    tranzaksiya.holat = 'success'
+                    tranzaksiya.holat = 'paid'
                     await session.commit()
 
                     masked_id = (str(telegram_id)[:2] + '*' * (len(str(telegram_id)) - 4) + str(telegram_id)[-2:])
@@ -213,18 +202,17 @@ async def check_pay(call: CallbackQuery):
                                               parse_mode='HTML')
 
             elif status == "pending":
-                await call.answer("⏳ To'lov hali amalga oshirilmagan (Kutilmoqda).", show_alert=False)
-            elif status == "failed":
-                await call.answer("❌ To'lov muvaffaqiyatsiz yakunlandi.\n\n<b>Xatolik roy bersa:</b> @itredr",
-                                  parse_mode='HTML', show_alert=False)
-            elif status == "cancelled":
-                await call.answer("🚫 To'lov bekor qilindi.\n\n<b>Xatolik roy bersa:</b> @itredr", parse_mode='HTML',
-                                  show_alert=False)
+                await call.answer("⏳ To'lov hali amalga oshirilmagan (Kutilmoqda).", show_alert=True)
+            elif status == "cancel":
+                await call.message.edit_text("❌ To'lov  amalga oshirilmagan (Bekor qilingan).", show_alert=False)
+
             else:
-                await call.answer(f"ℹ️ To'lov holati: {status}\n\n<b>Xatolik roy bersa:</b> @itredr",
-                                  parse_mode='HTML', show_alert=False)
+                await call.answer(text=f"ℹ️ To'lov holati: {status}\n\n<b>Xatolik roy bersa:</b> @biloliddinabdujabborov",
+                                  parse_mode='HTML', show_alert=True)
 
             await session.commit()
 
     finally:
         active_checks.discard(user_id)
+
+
