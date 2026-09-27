@@ -78,7 +78,7 @@ async def summa(message: Message, state: FSMContext):
 
     await message.answer(text=f"""<blockquote expandable>🔰 Etibor bering siz kiritgan summa emas bot bergan summani o'tkazing ❗️,
 Aks holda tolov tasdiqlanmasligi mumkun 📵
-O'tkazilgan summa toliq balansingizga tushadi ✅<blockquote>
+O'tkazilgan summa toliq balansingizga tushadi ✅</blockquote>
 
 <b>💳 To'lov midori:</b> <code>{summa}</code> so'm
 
