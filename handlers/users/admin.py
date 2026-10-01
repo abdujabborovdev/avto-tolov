@@ -319,11 +319,15 @@ async def foydalanuvchilar(message: Message, state: FSMContext):
             await state.clear()
             return
 
-        await session.execute(
-            update(User).where(User.id == user_id).values(hisob=User.hisob + suma)
-        )
-        await session.commit()
-        await session.refresh(user)
+        try:
+            yangi = int(user.hisob or 0) + suma
+            user.hisob = str(yangi) if isinstance(user.hisob, str) else yangi
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            await message.answer(f"❌ Xatolik: {e}")
+            await state.clear()
+            return
 
         if suma < 0:
             await message.answer(
