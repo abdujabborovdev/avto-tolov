@@ -221,9 +221,8 @@ async def raqam_olish(message:Message):
 
     await message.answer(f"""<b><tg-emoji emoji-id='5444965061749644170'>👨‍💻</tg-emoji> Bot dasturchisi: @biloliddinabdujabborov
 
-
 <blockquote expandable><tg-emoji emoji-id='5409048419211682843'>💵</tg-emoji> Siz ham o'z telegram botingizni yaratib daromad qilishni boshlang! Botlarga rasmiy ravishda avtomatik to'lov tizimlari qo'shilgan.</blockquote>
-5409048419211682843
+
 <tg-emoji emoji-id='5406745015365943482'>⬇️</tg-emoji> Sizga ham shunday turdagi bot kerak boʻlsa bizga murojaat qilishingiz mumkin!</b>""", reply_markup=devo, parse_mode='HTML')
 
 
