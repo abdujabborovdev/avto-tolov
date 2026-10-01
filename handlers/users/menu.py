@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 
 from sqlalchemy import select
 from keyboards.inline.nomer import generate_countries_keyboard, number_ols
-from keyboards.inline.support import support
+from keyboards.inline.support import support, devo
 from keyboards.inline.create_key import create_key, secret_key_inb
 from keyboards.inline.tolov import tolov_qilish, tolov_tur
 from utils.db_api.create_user import *  # async_session, User, Numbers_list, Order_numbers, SecretApiKey va h.k.
@@ -153,12 +153,10 @@ async def nomer_detail(call: CallbackQuery):
     await call.answer()
 
 
-@router.message((F.text == 'Support') | (F.text == '/support'))
+@router.message((F.text == 'Qo‘llab-quvvatlash') | (F.text == '/support'))
 async def menu(message: Message):
 
-    await message.answer("""<b>🆘 SUPPORT – Qo‘llab-quvvatlash xizmati</b>
-
-Savollaringiz yoki muammolaringiz bormi? Biz sizga tez va samarali yordam beramiz!""",
+    await message.answer("""<b>Savol va Takliflar bo'lsa pastdagi manzilimizga murojaat qilishingiz mumkin!</b>""",
                          reply_markup=support, parse_mode='HTML')
 
 
@@ -215,4 +213,17 @@ async def hamkorlik(message: Message):
 <blockquote expandable>• API kalit yaratish uchun pasdagi <b>🔑 Kalit yaratish</b> tugmasini bosing 
 - Kalitingizni boshqa odamga korsatmang va yubormang
 - Va havsiz joyda saqlang</blockquote>""", reply_markup=create_button, parse_mode='HTML')
+
+
+
+@router.message(F.text=='/dev')
+async def raqam_olish(message:Message):
+
+    await message.answer(f"""<b><tg-emoji emoji-id='5444965061749644170'>👨‍💻</tg-emoji> Bot dasturchisi: @biloliddinabdujabborov
+
+
+<blockquote expandable><tg-emoji emoji-id='5409048419211682843'>💵</tg-emoji> Siz ham o'z telegram botingizni yaratib daromad qilishni boshlang! Botlarga rasmiy ravishda avtomatik to'lov tizimlari qo'shilgan.</blockquote>
+5409048419211682843
+<tg-emoji emoji-id='5406745015365943482'>⬇️</tg-emoji> Sizga ham shunday turdagi bot kerak boʻlsa bizga murojaat qilishingiz mumkin!</b>""", reply_markup=devo, parse_mode='HTML')
+
 

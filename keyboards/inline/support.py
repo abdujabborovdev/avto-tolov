@@ -2,11 +2,14 @@ from aiogram.types import InlineKeyboardButton,InlineKeyboardMarkup
 
 support = InlineKeyboardMarkup(inline_keyboard=[
     [
-        InlineKeyboardButton(text='📞 Admin',url='https://t.me/itredr')
+        InlineKeyboardButton(text='Qo‘llab quvvatlash',url='https://t.me/biloliddinabdujabborov',icon_custom_emoji_id="5465169893580086142")
 
      ],
-    [
-        InlineKeyboardButton(text='👨‍💻 Dasturchi',url='https://t.me/itredr')
-    ]
+])
 
+devo = InlineKeyboardMarkup(inline_keyboard=[
+    [
+        InlineKeyboardButton(text="Ma'lumot olish", url='https://t.me/uzbotchi', icon_custom_emoji_id='5190498849440931467')
+
+    ]
 ])
