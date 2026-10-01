@@ -31,8 +31,8 @@ async def menu(message: Message):
 
 <b><tg-emoji emoji-id='6041777576714702813'>📌</tg-emoji> Ishlash tartibi:</b>
 <tg-emoji emoji-id='5794164805065514131'>✅</tg-emoji> Bot sizga akkaunt raqamini beradi.  
-<tg-emoji emoji-id='5794085322400733645'>2️⃣ </tg-emoji> Shu raqam orqali Telegramga kirasiz (<b>Rasmiy ko‘k Telegram ilovasidan FOYDALANMANG, norasmiy ilovalardan foydalaning</b>).  
-<tg-emoji emoji-id='5794280000383358988'>3️⃣ </tg-emoji> Telegram kod so‘raganda “<b>📲SMS olish</b>” tugmasini bosing va kuting.  
+<tg-emoji emoji-id='5794085322400733645'>✅</tg-emoji> Shu raqam orqali Telegramga kirasiz (<b>Rasmiy ko‘k Telegram ilovasidan FOYDALANMANG, norasmiy ilovalardan foydalaning</b>).  
+<tg-emoji emoji-id='5794280000383358988'>✅</tg-emoji> Telegram kod so‘raganda “<b>📲SMS olish</b>” tugmasini bosing va kuting.  
 <tg-emoji emoji-id='5794241397217304511'>✅</tg-emoji> Sizga kirish kodi va 2 bosqichli parol taqdim etiladi.  
 <tg-emoji emoji-id='5793985348446984682'>✅</tg-emoji> Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.
 
@@ -75,7 +75,7 @@ async def tolov_turi(call: CallbackQuery):
 
 @router.message((F.text == 'Pul kiritish') | (F.text == '/deposit'))
 async def menu(message: Message):
-    await message.answer("<tg-emoji emoji-id='5314787416211481862'>🗃️</tg-emoji> Kerakli to’lov tizimini tanlang:", reply_markup=tolov_tur)
+    await message.answer("<tg-emoji emoji-id='5314787416211481862'>✅</tg-emoji> Kerakli to’lov tizimini tanlang:", reply_markup=tolov_tur)
 
 
 @router.message((F.text == 'Nomerlarim') | (F.text == '/my_numbers'))
