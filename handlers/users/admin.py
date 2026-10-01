@@ -306,49 +306,43 @@ async def foydalanuvchilar(message: Message, state: FSMContext):
 
 
 @router.message(Suma_qosh.summa)
-async def foydalanuvchilar(message: Message, state: FSMContext):
-    text = message.text
-
+async def add_balance_sum(message: Message, state: FSMContext):
     try:
-        suma = int(text)
+        suma = int(message.text.strip())
     except ValueError:
-        await message.answer(
-            "❌ Iltimos, faqat raqam kiriting!\n(Masalan, qo'shish uchun: <b>5000</b>, ayirish uchun: <b>-5000</b>)",
+        return await message.answer(
+            "❌ Iltimos, faqat raqam kiriting!\n(Masalan: <b>5000</b> yoki <b>-5000</b>)",
             parse_mode="HTML")
-        return
 
     data = await state.get_data()
     user_id = data.get("tg_idsi")
 
-    async with async_session() as session:
-        result = await session.execute(select(User).filter(User.id == user_id))
-        user = result.scalar_one_or_none()
+    try:
+        async with async_session() as session:
+            result = await session.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
 
-        if user is None:
-            await message.answer("❌ Bu ID bo'yicha foydalanuvchi bazadan topilmadi!")
-            await state.clear()
-            return
+            if user is None:
+                await state.clear()
+                return await message.answer("❌ Foydalanuvchi topilmadi!")
 
-        try:
             yangi = int(user.hisob or 0) + suma
             user.hisob = str(yangi) if isinstance(user.hisob, str) else yangi
             await session.commit()
-        except Exception as e:
-            await session.rollback()
-            await message.answer(f"❌ Xatolik: {e}")
-            await state.clear()
-            return
 
+        # session yopilgandan keyin user.hisob ishlatilmaydi, yangi ishlatiladi
         if suma < 0:
-            await message.answer(
-                f"✅ Muvaffaqiyatli! Foydalanuvchi hisobidan <b>{abs(suma)}</b> so'm ayrildi.\n💳 Yangi balans: <b>{user.hisob}</b> so'm",
-                parse_mode="HTML")
+            matn = f"✅ Hisobdan <b>{abs(suma)}</b> so'm ayrildi.\n💳 Yangi balans: <b>{yangi}</b> so'm"
         else:
-            await message.answer(
-                f"✅ Muvaffaqiyatli! Foydalanuvchi hisobiga <b>{suma}</b> so'm qo'shildi.\n💳 Yangi balans: <b>{user.hisob}</b> so'm",
-                parse_mode="HTML")
+            matn = f"✅ Hisobga <b>{suma}</b> so'm qo'shildi.\n💳 Yangi balans: <b>{yangi}</b> so'm"
+        await message.answer(matn, parse_mode="HTML")
 
-    await state.clear()
+    except Exception as e:
+        await message.answer(f"❌ Xatolik: {type(e).__name__}: {e}")
+
+    finally:
+        await state.clear()
+
 
 
 from keyboards.default.cencel import cencel_but
