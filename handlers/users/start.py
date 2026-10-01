@@ -21,10 +21,6 @@ async def bot_start(message: Message):
         if user:
             await message.answer(f"""<b>👋 Assalomu alaykum xbomer.uz | foydalanuvchisi !</b>
 
-<b>🚀 Ushbu bot sizga Telegram tarmoqlari uchun ishonchli va kafolatliy  TG profil xizmatlarini taklif etadi!
-💫Bizning botimizga obuna bo'ling va do'stlaringiz bilan baham ko'ring
-👇Davom etish uchun quyidagi buyruqlar birini tanlang</b>
-
 <blockquote expandable>/balance — <tg-emoji emoji-id='5976377521287990495'>💳</tg-emoji> Kabinetim
 /buy_number — <tg-emoji emoji-id='6037418554276452311'>📱</tg-emoji> Hisob olish
 /deposit — <tg-emoji emoji-id='5305525714374645893'>💰</tg-emoji> Pul kiritish
@@ -43,10 +39,6 @@ async def bot_start(message: Message):
             await session.commit()
 
             await message.answer(f"""<b>👋 Assalomu alaykum xbomer.uz | foydalanuvchisi !
-
-<b>🚀 Ushbu bot sizga Telegram tarmoqlari uchun ishonchli va kafolatliy  TG profil xizmatlarini taklif etadi!
-💫Bizning botimizga obuna bo'ling va do'stlaringiz bilan baham ko'ring
-👇Davom etish uchun quyidagi buyruqlar birini tanlang</b>
 
 <blockquote expandable>/balance — <tg-emoji emoji-id='5976377521287990495'>💳</tg-emoji> Kabinetim
 /buy_number — <tg-emoji emoji-id='6037418554276452311'>📱</tg-emoji> Hisob olish
