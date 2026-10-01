@@ -153,7 +153,7 @@ async def nomer_detail(call: CallbackQuery):
     await call.answer()
 
 
-@router.message((F.text == 'Qo‘llab-quvvatlash') | (F.text == '/support'))
+@router.message((F.text == 'Qo‘llab quvvatlash') | (F.text == '/support'))
 async def menu(message: Message):
 
     await message.answer("""<b>Savol va Takliflar bo'lsa pastdagi manzilimizga murojaat qilishingiz mumkin!</b>""",
