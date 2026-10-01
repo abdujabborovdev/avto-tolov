@@ -161,7 +161,7 @@ async def successful_payment(message: Message):
     try:
         await message.answer_photo(
             chek_image(order_id, telegram_id, summa, new_balance),
-            caption=f"✅ To'lov muvaffaqiyatli tasdiqlandi! {summa} so'm hisobingizga qo'shildi.",
+            caption=f"<b>✅ To'lov muvaffaqiyatli tasdiqlandi</b>",
         )
     except Exception as e:
         print(f"Chek da xatolik: {e}")
