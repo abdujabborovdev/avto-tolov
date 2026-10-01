@@ -37,14 +37,14 @@ async def create_key(call: CallbackQuery):
             keyboard = secret_key_inb()
             await call.message.edit_text(f"""<b>Muvafiyaqiyatlik kalit yaratildi <tg-emoji emoji-id='5370870691140737817'>🥳</tg-emoji>
 
-⚙️ Api dokument:
-🔗 https://xbomer.uz/api/
+⚙<tg-emoji emoji-id='5974104203688152439'>⚙️</tg-emoji> Api dokument:
+<tg-emoji emoji-id='5974492756494519709'>🔗</tg-emoji> https://xbomer.uz/api/
 
-🔑 Ilk Api xizmat:
-🔗 https://xbomer.uz/api/v1
+<b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Ilk Api xizmat:
+<tg-emoji emoji-id='5974492756494519709'>🔗</tg-emoji> https://xbomer.uz/api/v1
 
-🔑 Sizning API kalitingiz: <code>{secret_key}</code>
-💵 Balansingiz:  {user_hisob} so'm </b>""", parse_mode="html", reply_markup=keyboard)
+<b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Sizning API kalitingiz: <code>{secret_key}</code>
+<tg-emoji emoji-id='5264771190609682694'>💵</tg-emoji> Balansingiz:  {user_hisob} so'm </b>""", parse_mode="html", reply_markup=keyboard)
         else:
             try:
                 await call.message.edit_text(
@@ -87,14 +87,14 @@ async def update_key(call: CallbackQuery):
             keyboard = secret_key_inb()
             await call.message.edit_text(f"""<b>Muvafiyaqiyatlik kalit yangilish <tg-emoji emoji-id='5370870691140737817'>🥳</tg-emoji>
 
-⚙️ Api dokument:
-🔗 https://xbomer.uz/api/
+<tg-emoji emoji-id='5974104203688152439'>⚙️</tg-emoji> Api dokument:
+<tg-emoji emoji-id='5974492756494519709'>🔗</tg-emoji> https://xbomer.uz/api/
 
-🔑 Ilk Api xizmat:
-🔗 https://xbomer.uz/api/v1
+<b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Ilk Api xizmat:
+<tg-emoji emoji-id='5974492756494519709'>🔗</tg-emoji> https://xbomer.uz/api/v1
 
-🔑 Sizning API kalitingiz: <code>{secret_key}</code>
-💵 Balansingiz:  {user_hisob} so'm </b>""", parse_mode="html", reply_markup=keyboard)
+<b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Sizning API kalitingiz: <code>{secret_key}</code>
+<tg-emoji emoji-id='5264771190609682694'>💵</tg-emoji> Balansingiz:  {user_hisob} so'm </b>""", parse_mode="html", reply_markup=keyboard)
 
         else:
-            await call.message.edit_text(f"Kalit yangilanmadi supportga murojat qiling")
+            await call.message.edit_text(f"<tg-emoji emoji-id='5465665476971471368'>❌</tg-emoji> Kalit yangilanmadi supportga murojat qiling")

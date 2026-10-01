@@ -19,7 +19,7 @@ async def bot_start(message: Message):
         user = result.scalar_one_or_none()
 
         if user:
-            await message.answer(f"""<b>👋 Assalomu alaykum xbomer.uz | foydalanuvchisi !</b>
+            await message.answer(f"""<b><tg-emoji emoji-id='5472055112702629499'>👋</tg-emoji> Assalomu alaykum xbomer.uz | foydalanuvchisi !</b>
 
 <blockquote expandable>/balance — <tg-emoji emoji-id='5976377521287990495'>💳</tg-emoji> Kabinetim
 /buy_number — <tg-emoji emoji-id='6037418554276452311'>📱</tg-emoji> Hisob olish
@@ -29,7 +29,7 @@ async def bot_start(message: Message):
 /faq — <tg-emoji emoji-id='5226512880362332956'>📖</tg-emoji> Qo'llanma
 /dev — <tg-emoji emoji-id='5190458330719461749'>💻</tg-emoji>🧑‍💻 Dasturchi</blockquote>
 
-<b>👤ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')
+<b><tg-emoji emoji-id='5256143829672672750'>👤</tg-emoji> ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')
 
         else:
             if message.from_user.username:
@@ -38,7 +38,7 @@ async def bot_start(message: Message):
             session.add(new_user)
             await session.commit()
 
-            await message.answer(f"""<b>👋 Assalomu alaykum xbomer.uz | foydalanuvchisi !
+            await message.answer(f"""<b><tg-emoji emoji-id='5472055112702629499'>👋</tg-emoji> Assalomu alaykum xbomer.uz | foydalanuvchisi !
 
 <blockquote expandable>/balance — <tg-emoji emoji-id='5976377521287990495'>💳</tg-emoji> Kabinetim
 /buy_number — <tg-emoji emoji-id='6037418554276452311'>📱</tg-emoji> Hisob olish
@@ -48,4 +48,4 @@ async def bot_start(message: Message):
 /faq — <tg-emoji emoji-id='5226512880362332956'>📖</tg-emoji> Qo'llanma
 /dev — <tg-emoji emoji-id='5190458330719461749'>💻</tg-emoji>🧑‍💻 Dasturchi</blockquote>
 
-<b>👤ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')
+<b><tg-emoji emoji-id='5256143829672672750'>👤</tg-emoji> ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')

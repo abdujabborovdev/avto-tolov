@@ -25,8 +25,8 @@ CHANNEL_ID = '-1004365925735'
 async def callback(message: CallbackQuery, state: FSMContext):
     await state.set_state(Tolov_qilish.summa)
     await message.message.edit_text(
-        f"""<b>💵 Balansizni necha so'mga to'ldirmoqchisiz?
-📰 Minimal miqdor: 1 000 so'm</b>""",
+        f"""<b><tg-emoji emoji-id='5264771190609682694'>💵</tg-emoji> Balansizni necha so'mga to'ldirmoqchisiz?
+<tg-emoji emoji-id='5893057118545646106'>📰</tg-emoji> Minimal miqdor: 1 000 so'm</b>""",
         parse_mode='HTML',
     )
 
@@ -36,17 +36,17 @@ async def summa(message: Message, state: FSMContext):
     text = (message.text or "").replace(" ", "")
 
     if not text.isdigit():
-        await message.answer("⚠️ Xatolik: Iltimos, faqat raqam ko'rinishida kiriting (masalan: 1000)")
+        await message.answer("<tg-emoji emoji-id='5462935376714802451'>⚠️</tg-emoji> Xatolik: Iltimos, faqat raqam ko'rinishida kiriting (masalan: 1000)")
         return
 
     user_summa = int(text)
 
     if user_summa < MIN_SUMMA:
-        await message.answer("⚠️ To'lov miqdori minimaldan kam, minimal 1000 so'm kirita olasiz")
+        await message.answer("<tg-emoji emoji-id='5462935376714802451'>⚠️</tg-emoji> To'lov miqdori minimaldan kam, minimal 1000 so'm kirita olasiz")
         return
 
     if user_summa > MAX_SUMMA:
-        await message.answer(f"⚠️ Maksimal miqdor: {MAX_SUMMA:,} so'm".replace(",", " "))
+        await message.answer(f"<tg-emoji emoji-id='5462935376714802451'>⚠️</tg-emoji> Maksimal miqdor: {MAX_SUMMA:,} so'm".replace(",", " "))
         return
 
     await state.clear()

@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardButton,InlineKeyboardMarkup
 
 number_ols = InlineKeyboardMarkup(inline_keyboard=[
     [
-        InlineKeyboardButton(text='Raqamni olish✅',callback_data='nomer_ol')
+        InlineKeyboardButton(text='Raqamni olish',callback_data='nomer_ol',icon_custom_emoji_id='5427009714745517609')
     ]
 ])
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup

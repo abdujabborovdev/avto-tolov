@@ -32,7 +32,7 @@ async def nomer_detail_handler(call: CallbackQuery):
         await call.message.edit_text(f"""<b>Davlat:</b> {Number.country}
 <b>Narxi:</b> {Number.price}
 
-<b> Tasdiqlash ✅</b> tugmasini bosing !""", parse_mode='HTML', reply_markup=keyboar)
+<b> Tasdiqlash <tg-emoji emoji-id='5427009714745517609'>✅</tg-emoji></b> tugmasini bosing !""", parse_mode='HTML', reply_markup=keyboar)
 
 
 @router.callback_query(F.data.startswith("buy_number:"))
@@ -40,7 +40,7 @@ async def buy_number_handler(call: CallbackQuery):
     user_id = call.from_user.id
 
     if user_id in active_number_purchases:
-        await call.answer("⏳ So'rovingiz bajarilmoqda, biroz kuting...", show_alert=False)
+        await call.answer("<tg-emoji emoji-id='5213452215527677338'>⏳</tg-emoji> So'rovingiz bajarilmoqda, biroz kuting...", show_alert=False)
         return
 
     active_number_purchases.add(user_id)
@@ -56,7 +56,7 @@ async def buy_number_handler(call: CallbackQuery):
             user = result.scalar_one_or_none()
 
             if not user:
-                await call.answer("❌ Foydalanuvchi topilmadi!", show_alert=True)
+                await call.answer("<tg-emoji emoji-id='5465665476971471368'>❌</tg-emoji> Foydalanuvchi topilmadi!", show_alert=True)
                 return
 
             try:
@@ -65,7 +65,7 @@ async def buy_number_handler(call: CallbackQuery):
                 hisobi = 0
 
             if hisobi < price:
-                await call.answer("❌ Mablag'ingiz yetarli emas!", show_alert=True)
+                await call.answer("<tg-emoji emoji-id='5465665476971471368'>❌</tg-emoji> Mablag'ingiz yetarli emas!", show_alert=True)
                 return
 
             await call.message.edit_text("⏳ Raqam qidirilmoqda, iltimos kuting...")
@@ -79,7 +79,7 @@ async def buy_number_handler(call: CallbackQuery):
                     }) as r:
                         dat = await r.json()
             except Exception as e:
-                await call.message.edit_text(f"❌ Xatolik yuz berdi: {e}\nQayta urinib ko'ring.")
+                await call.message.edit_text(f"<tg-emoji emoji-id='5465665476971471368'>❌</tg-emoji> Xatolik yuz berdi: {e}\nQayta urinib ko'ring.")
                 return
 
             if isinstance(dat, dict) and dat.get('number'):
@@ -87,7 +87,7 @@ async def buy_number_handler(call: CallbackQuery):
                 current_hisob = int(user.hisob) if user.hisob is not None else 0
 
                 if current_hisob < price:
-                    await call.message.edit_text("❌ Xatolik: Mablag'ingiz yetarli emas!")
+                    await call.message.edit_text("<tg-emoji emoji-id='5465665476971471368'>❌</tg-emoji> Xatolik: Mablag'ingiz yetarli emas!")
                     return
 
                 user.hisob = current_hisob - price
@@ -139,14 +139,14 @@ async def buy_number_handler(call: CallbackQuery):
                         pass
 
                 await call.message.edit_text(
-                    f"""✅ Muvaffaqiyatli raqam olindi!\n\n<b>Nomer:</b> {number} \n<b>id:</b> {num_id}""",
+                    f"""<tg-emoji emoji-id='5427009714745517609'>✅</tg-emoji> Muvaffaqiyatli raqam olindi!\n\n<b>Nomer:</b> {number} \n<b>id:</b> {num_id}""",
                     parse_mode='HTML',
                     reply_markup=keyboard
                 )
             else:
                 error_msg = dat.get('message', "Hozirda bu davlatda bo'sh raqamlar yo'q!") if isinstance(dat,
                                                                                                          dict) else "Noma'lum xatolik"
-                await call.message.edit_text(f"❌ Raqam berilmadi.\nSabab: {error_msg}")
+                await call.message.edit_text(f"<tg-emoji emoji-id='5465665476971471368'>❌</tg-emoji> Raqam berilmadi.\nSabab: {error_msg}")
     finally:
         active_number_purchases.discard(user_id)
 
@@ -163,7 +163,7 @@ async def check_num(call: CallbackQuery):
         number_order = result.scalar_one_or_none()
 
         if not number_order:
-            await call.answer("❌ Buyurtma topilmadi!", show_alert=True)
+            await call.answer("<tg-emoji emoji-id='5465665476971471368'>❌</tg-emoji> Buyurtma topilmadi!", show_alert=True)
             return
 
         async with aiohttp.ClientSession() as r:
@@ -181,7 +181,7 @@ async def check_num(call: CallbackQuery):
                 number_order.kod = kodi
                 number_order.pas2 = dat.get('password')
                 await session.commit()
-                await call.message.edit_text(f"""<b>✅ SMS muvafiyaqiyatlik olindi
+                await call.message.edit_text(f"""<b><tg-emoji emoji-id='5427009714745517609'>✅</tg-emoji> SMS muvafiyaqiyatlik olindi
 
 Kod:</b> <code>{dat.get('code')}</code>
 <b>Pass:</b> <code>{dat.get('password')}</code>
@@ -189,4 +189,4 @@ Kod:</b> <code>{dat.get('code')}</code>
 <i>Pass ni 2 boshqichlik parol soraganda kiritasiz</i>
 """, parse_mode="HTML")
             elif dat.get('status') == 'WAITING':
-                await call.answer('❌ Xali sms habar kelgani yoq birozdan song urinib koring', show_alert=True)
+                await call.answer("<tg-emoji emoji-id='5465665476971471368'>❌</tg-emoji> Xali sms habar kelgani yoq birozdan song urinib koring", show_alert=True)
