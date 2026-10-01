@@ -3,7 +3,7 @@ from aiogram import Router, F
 import asyncio
 from data.config import *
 from keyboards.default.admin import admin_k
-from sqlalchemy import select, delete, func
+from sqlalchemy import select, delete, func, update
 from utils.db_api.create_user import Numbers_list, async_session, Transaction, User, Order_numbers,SecretApiKey
 import aiohttp
 from states.add_mon import Suma_qosh, AdminSearchState, NumberSearchState, TransactionSearchState
@@ -297,7 +297,7 @@ async def foydalanuvchilar(message: Message, state: FSMContext):
 
 @router.message(Suma_qosh.summa)
 async def foydalanuvchilar(message: Message, state: FSMContext):
-    text = message.text.strip()
+    text = message.text
 
     try:
         suma = int(text)
