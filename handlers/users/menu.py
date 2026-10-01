@@ -34,7 +34,7 @@ async def menu(message: Message):
 <tg-emoji emoji-id='5381990043642502553'>✅</tg-emoji> Shu raqam orqali Telegramga kirasiz (<b>Rasmiy ko‘k Telegram ilovasidan FOYDALANMANG, norasmiy ilovalardan foydalaning</b>).  
 <tg-emoji emoji-id='5381879959335738545'>✅</tg-emoji> Telegram kod so‘raganda “<b>📲SMS olish</b>” tugmasini bosing va kuting.  
 <tg-emoji emoji-id='5382054253403577563'>✅</tg-emoji> Sizga kirish kodi va 2 bosqichli parol taqdim etiladi.  
-<tg-emoji emoji-id='5391197405553107640'>✅</tg-emoji> Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.<blockquote>
+<tg-emoji emoji-id='5391197405553107640'>✅</tg-emoji> Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.</blockquote>
 
 
 <tg-emoji emoji-id='5427009714745517609'>✅</tg-emoji> Barcha ma’lumotlarni o‘qib chiqqan bo‘lsangiz, “Tushundim” tugmasini bosing.""", reply_markup=number_ols, parse_mode='HTML')
