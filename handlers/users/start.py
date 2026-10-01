@@ -27,7 +27,7 @@ async def bot_start(message: Message):
 /my_numbers — <tg-emoji emoji-id='5197269100878907942'>📋</tg-emoji> Nomerlarim ro'yxati
 /support — <tg-emoji emoji-id='5463289209005560690'>📞</tg-emoji> Qo'llab-quvvatlash
 /faq — <tg-emoji emoji-id='5226512880362332956'>📖</tg-emoji> Qo'llanma
-/dev — <tg-emoji emoji-id='5190458330719461749'>💻</tg-emoji>🧑‍💻 Dasturchi</blockquote>
+/dev — <tg-emoji emoji-id='5190458330719461749'>💻</tg-emoji> Dasturchi</blockquote>
 
 <b><tg-emoji emoji-id='5256143829672672750'>👤</tg-emoji> ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')
 
@@ -46,6 +46,6 @@ async def bot_start(message: Message):
 /my_numbers — <tg-emoji emoji-id='5197269100878907942'>📋</tg-emoji> Nomerlarim ro'yxati
 /support — <tg-emoji emoji-id='5463289209005560690'>📞</tg-emoji> Qo'llab-quvvatlash
 /faq — <tg-emoji emoji-id='5226512880362332956'>📖</tg-emoji> Qo'llanma
-/dev — <tg-emoji emoji-id='5190458330719461749'>💻</tg-emoji>🧑‍💻 Dasturchi</blockquote>
+/dev — <tg-emoji emoji-id='5190458330719461749'>💻</tg-emoji> Dasturchi</blockquote>
 
 <b><tg-emoji emoji-id='5256143829672672750'>👤</tg-emoji> ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')

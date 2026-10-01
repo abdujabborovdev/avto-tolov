@@ -29,12 +29,12 @@ async def menu(message: Message):
 async def menu(message: Message):
     await message.answer(f"""<tg-emoji emoji-id='5104966345267610825'>📶</tg-emoji> <b>Tayyor Telegram akkauntlar</b> — bu oldindan ro‘yxatdan o‘tgan, ishlashga tayyor akkauntlar bo‘lib, sizga doimiy foydalanish uchun taqdim etiladi.
 
-<b><tg-emoji emoji-id='6041777576714702813'>📌</tg-emoji> Ishlash tartibi:</b>
-<tg-emoji emoji-id='5794164805065514131'>✅</tg-emoji> Bot sizga akkaunt raqamini beradi.  
-<tg-emoji emoji-id='5794085322400733645'>✅</tg-emoji> Shu raqam orqali Telegramga kirasiz (<b>Rasmiy ko‘k Telegram ilovasidan FOYDALANMANG, norasmiy ilovalardan foydalaning</b>).  
-<tg-emoji emoji-id='5794280000383358988'>✅</tg-emoji> Telegram kod so‘raganda “<b>📲SMS olish</b>” tugmasini bosing va kuting.  
-<tg-emoji emoji-id='5794241397217304511'>✅</tg-emoji> Sizga kirish kodi va 2 bosqichli parol taqdim etiladi.  
-<tg-emoji emoji-id='5793985348446984682'>✅</tg-emoji> Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.
+<b><tg-emoji emoji-id='5462912132351797094'>📌</tg-emoji> Ishlash tartibi:</b>
+<blockquote expandable><tg-emoji emoji-id='5382322671679708881'>✅</tg-emoji> Bot sizga akkaunt raqamini beradi.  
+<tg-emoji emoji-id='5381990043642502553'>✅</tg-emoji> Shu raqam orqali Telegramga kirasiz (<b>Rasmiy ko‘k Telegram ilovasidan FOYDALANMANG, norasmiy ilovalardan foydalaning</b>).  
+<tg-emoji emoji-id='5381879959335738545'>✅</tg-emoji> Telegram kod so‘raganda “<b>📲SMS olish</b>” tugmasini bosing va kuting.  
+<tg-emoji emoji-id='5382054253403577563'>✅</tg-emoji> Sizga kirish kodi va 2 bosqichli parol taqdim etiladi.  
+<tg-emoji emoji-id='5391197405553107640'>✅</tg-emoji> Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.<blockquote>
 
 
 <tg-emoji emoji-id='5427009714745517609'>✅</tg-emoji> Barcha ma’lumotlarni o‘qib chiqqan bo‘lsangiz, “Tushundim” tugmasini bosing.""", reply_markup=number_ols, parse_mode='HTML')
@@ -75,7 +75,7 @@ async def tolov_turi(call: CallbackQuery):
 
 @router.message((F.text == 'Pul kiritish') | (F.text == '/deposit'))
 async def menu(message: Message):
-    await message.answer("<tg-emoji emoji-id='5314787416211481862'>✅</tg-emoji> Kerakli to’lov tizimini tanlang:", reply_markup=tolov_tur)
+    await message.answer("<tg-emoji emoji-id='5314787416211481862'>🗃️</tg-emoji> Kerakli to’lov tizimini tanlang:", reply_markup=tolov_tur)
 
 
 @router.message((F.text == 'Nomerlarim') | (F.text == '/my_numbers'))
@@ -116,41 +116,16 @@ async def nomer_detail(call: CallbackQuery):
     info_text = (
         f"<tg-emoji emoji-id='5370604433233177619'>📌</tg-emoji> <b>Raqam haqida ma'lumot:</b>\n\n"
         f"<tg-emoji emoji-id='5974526806995242353'>🆔</tg-emoji> <b>ID:</b> {nomer.id}\n"
-        f"<tg-emoji emoji-id='5224450179368767019'>🌍</tg-emoji> <b>Davlat:</b> {nomer.country}\n"
-        f"<tg-emoji emoji-id='6019358113717555283'>📞</tg-emoji> <b>Raqam:</b> {nomer.number}\n"
-        f"<tg-emoji emoji-id='5974534868648856687'>📊</tg-emoji> <b>Status:</b> {nomer.status}\n"
-        f"<tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> <b>Kod:</b> {nomer.kod}\n"
-        f"<tg-emoji emoji-id='5897604269141398480'>🔐</tg-emoji> <b>Parol (pas2):</b> {nomer.pas2}"
+        f"<tg-emoji emoji-id='5397575638146110953'>🌍</tg-emoji> <b>Davlat:</b> {nomer.country}\n"
+        f"<tg-emoji emoji-id='5467539229468793355'>📞</tg-emoji> <b>Raqam:</b> {nomer.number}\n"
+        f"<tg-emoji emoji-id='5350398227013188928'>📊</tg-emoji> <b>Status:</b> {nomer.status}\n"
+        f"<tg-emoji emoji-id='5330115548900501467'>🔑</tg-emoji> <b>Kod:</b> {nomer.kod}\n"
+        f"<tg-emoji emoji-id='5472308992514464048'>🔐</tg-emoji> <b>Parol (pas2):</b> {nomer.pas2}"
     )
 
     await call.message.answer(info_text, parse_mode='HTML')
     await call.answer()
 
-
-@router.callback_query(F.data.startswith("nomer_info_"))
-async def nomer_detail(call: CallbackQuery):
-    nomer_id = int(call.data.split("_")[2])
-
-    async with async_session() as session:
-        result = await session.execute(select(Order_numbers).filter(Order_numbers.id == nomer_id))
-        nomer = result.scalar_one_or_none()
-
-    if not nomer:
-        await call.answer("<tg-emoji emoji-id='5465665476971471368'>❌</tg-emoji> Bu raqam bazadan topilmadi!", show_alert=True)
-        return
-
-    info_text = (
-        f"<tg-emoji emoji-id='5370604433233177619'>📌</tg-emoji> <b>Raqam haqida ma'lumot:</b>\n\n"
-        f"<tg-emoji emoji-id='5974526806995242353'>🆔</tg-emoji> <b>ID:</b> {nomer.id}\n"
-        f"<tg-emoji emoji-id='5224450179368767019'>🌍</tg-emoji> <b>Davlat:</b> {nomer.country}\n"
-        f"<tg-emoji emoji-id='6019358113717555283'>📞</tg-emoji> <b>Raqam:</b> {nomer.number}\n"
-        f"<tg-emoji emoji-id='5974534868648856687'>📊</tg-emoji> <b>Status:</b> {nomer.status}\n"
-        f"<tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> <b>Kod:</b> {nomer.kod}\n"
-        f"<tg-emoji emoji-id='5897604269141398480'>🔐</tg-emoji> <b>Parol (pas2):</b> {nomer.pas2}"
-    )
-
-    await call.message.answer(info_text, parse_mode='HTML')
-    await call.answer()
 
 
 @router.message((F.text == 'Qo‘llab quvvatlash') | (F.text == '/support'))
@@ -196,21 +171,21 @@ async def hamkorlik(message: Message):
 
     if secret_key:
         keyboard = secret_key_inb()
-        await message.answer(f"""<b><tg-emoji emoji-id='5974104203688152439'>⚙️</tg-emoji> Api dokument:</b>
-<tg-emoji emoji-id='5974492756494519709'>🔗</tg-emoji> https://xbomer.uz/api/
+        await message.answer(f"""<b><tg-emoji emoji-id='5307544885874664176'>⚙️</tg-emoji> Api dokument:</b>
+<tg-emoji emoji-id='5375129357373165375'>🔗</tg-emoji> https://xbomer.uz/api/
 
-<b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Ilk Api xizmat:</b>
-<tg-emoji emoji-id='5974492756494519709'>🔗</tg-emoji> https://xbomer.uz/api/v1
+<b><tg-emoji emoji-id='5330115548900501467'>🔑</tg-emoji> Ilk Api xizmat:</b>
+<tg-emoji emoji-id='5375129357373165375'>🔗</tg-emoji> https://xbomer.uz/api/v1
 
-<b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Sizning API kalitingiz:</b> <code>{secret_key.secret_api_key}</code>
+<b><tg-emoji emoji-id='5330115548900501467'>🔑</tg-emoji> Sizning API kalitingiz:</b> <code>{secret_key.secret_api_key}</code>
 
-<b><tg-emoji emoji-id='5264771190609682694'>💵</tg-emoji> Balansingiz:</b> {user.hisob} so'm""", reply_markup=keyboard)
+<b><tg-emoji emoji-id='5296565124104993719'>💵</tg-emoji> Balansingiz:</b> {user.hisob} so'm""", reply_markup=keyboard)
     else:
         owner_id = int(message.from_user.id)
         create_button = create_key(owner_id=owner_id)
         await message.answer(f"""<b>Hamkorlik dasturidan foydalanish uchun API kalit yaratishingiz kerak <tg-emoji emoji-id='5427009714745517609'>✅</tg-emoji></b>
 
-<blockquote expandable>• API kalit yaratish uchun pasdagi <b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Kalit yaratish</b> tugmasini bosing 
+<blockquote expandable>• API kalit yaratish uchun pasdagi <b><tg-emoji emoji-id='5330115548900501467'>🔑</tg-emoji> Kalit yaratish</b> tugmasini bosing 
 - Kalitingizni boshqa odamga korsatmang va yubormang
 - Va havsiz joyda saqlang</blockquote>""", reply_markup=create_button, parse_mode='HTML')
 
