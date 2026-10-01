@@ -159,12 +159,12 @@ async def successful_payment(message: Message):
         return
 
     try:
-        await message.answer_document(
+        await message.answer_photo(
             chek_image(order_id, telegram_id, summa, new_balance),
             caption=f"✅ To'lov muvaffaqiyatli tasdiqlandi! {summa} so'm hisobingizga qo'shildi.",
         )
     except Exception as e:
-        print(f"Chek PDF da xatolik: {e}")
+        print(f"Chek da xatolik: {e}")
         await message.answer(chek_text(order_id, telegram_id, summa, new_balance), parse_mode="HTML")
 
     tid = str(telegram_id)

@@ -72,7 +72,7 @@ def chek_image(order_id, telegram_id, summa, balance, dt=None) -> BufferedInputF
     d.text((W // 2, H - 90), "Xaridingiz uchun rahmat!", font=_font(26), fill="#a0a9b4", anchor="mm")
 
     buf = BytesIO()
+    img.save(buf, format="PNG")
+    return BufferedInputFile(buf.getvalue(), filename=f"chek_{order_id}.png")
 
-    img.save(buf, format="PDF", resolution=100.0)
-    return BufferedInputFile(buf.getvalue(), filename=f"chek_{order_id}.pdf")
 
