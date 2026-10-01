@@ -5,7 +5,9 @@ from loader import bot, dp
 import middlewares, filters, handlers
 from utils.notify_admins import on_startup_notify
 from utils.set_bot_commands import set_default_commands
+import logging
 
+logging.basicConfig(level=logging.INFO)
 
 async def on_startup():
     await set_default_commands(bot)

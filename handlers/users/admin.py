@@ -36,6 +36,16 @@ router = Router()
 
 SEENSMS_KEY = SEENSMS_KEY
 ADMINS = ADMINS
+from aiogram.types.error_event import ErrorEvent
+import traceback
+
+@router.errors()
+async def errors_handler(event: ErrorEvent):
+    tb = "".join(traceback.format_exception(event.exception))[-3500:]
+    print(tb)
+    msg = event.update.message or (event.update.callback_query and event.update.callback_query.message)
+    if msg:
+        await msg.answer(f"❌ Xatolik:\n<pre>{tb}</pre>", parse_mode="HTML")
 
 
 @router.message(F.text == '/secret')
