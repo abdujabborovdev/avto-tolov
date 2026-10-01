@@ -8,3 +8,4 @@ aiofiles==25.1.0
 environs==15.1.0
 fastapi==0.141.1
 uvicorn==0.52.4.
+Pillow==12.3.0

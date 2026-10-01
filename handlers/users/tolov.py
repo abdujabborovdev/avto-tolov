@@ -12,22 +12,24 @@ from sqlalchemy.exc import IntegrityError
 from utils.db_api.create_user import *
 from states.tolov_qilish import Tolov_qilish
 from data.config import *
+from handlers.users.check import chek_text, chek_image
 
 router = Router()
 
 MIN_SUMMA = 1000
 MAX_SUMMA = 10_000_000
-CHANNEL_ID = '-1004365925735'  
+CHANNEL_ID = '-1004365925735'
 
 
 @router.callback_query(F.data == "tolov_qilish")
 async def callback(message: CallbackQuery, state: FSMContext):
     await state.set_state(Tolov_qilish.summa)
     await message.message.edit_text(
-        f"""<b>💵 Balansizni necha so'mga to'ldirmoqchisiz? 
+        f"""<b>💵 Balansizni necha so'mga to'ldirmoqchisiz?
 📰 Minimal miqdor: 1 000 so'm</b>""",
         parse_mode='HTML',
     )
+
 
 @router.message(Tolov_qilish.summa)
 async def summa(message: Message, state: FSMContext):
@@ -56,7 +58,7 @@ async def summa(message: Message, state: FSMContext):
         payload=f"topup:{telegram_id}:{user_summa}",
         provider_token=CLICK_PROVIDER_TOKEN,
         currency="UZS",
-        prices=[LabeledPrice(label="Balans", amount=user_summa * 100)],  # tiyinda!
+        prices=[LabeledPrice(label="Balans", amount=user_summa * 100)],
     )
 
 
@@ -92,11 +94,12 @@ async def successful_payment(message: Message):
 
     _, uid, _ = sp.invoice_payload.split(":")
     telegram_id = int(uid)
-    summa = sp.total_amount // 100 
+    summa = sp.total_amount // 100
 
     order_id = sp.provider_payment_charge_id or sp.telegram_payment_charge_id
 
     user_found = True
+    new_balance = 0
 
     async with async_session() as session:
         result = await session.execute(
@@ -117,6 +120,7 @@ async def successful_payment(message: Message):
             )
             current_hisob = int(user.hisob) if user.hisob else 0
             user.hisob = current_hisob + summa
+            new_balance = user.hisob
         else:
             user_found = False
             tranzaksiya = Transaction(
@@ -132,7 +136,7 @@ async def successful_payment(message: Message):
             await session.commit()
         except IntegrityError:
             await session.rollback()
-            return  
+            return
 
     if not user_found:
         for admin_id in ADMINS:
@@ -154,9 +158,14 @@ async def successful_payment(message: Message):
         )
         return
 
-    await message.answer(
-        f"✅ To'lov muvaffaqiyatli tasdiqlandi! {summa} so'm hisobingizga qo'shildi."
-    )
+    try:
+        await message.answer_document(
+            chek_image(order_id, telegram_id, summa, new_balance),
+            caption=f"✅ To'lov muvaffaqiyatli tasdiqlandi! {summa} so'm hisobingizga qo'shildi.",
+        )
+    except Exception as e:
+        print(f"Chek PDF da xatolik: {e}")
+        await message.answer(chek_text(order_id, telegram_id, summa, new_balance), parse_mode="HTML")
 
     tid = str(telegram_id)
     masked_id = tid[:2] + '*' * max(len(tid) - 4, 0) + tid[-2:]

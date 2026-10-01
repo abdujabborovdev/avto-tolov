@@ -23,7 +23,15 @@ async def bot_start(message: Message):
 
 <b>🚀 Ushbu bot sizga Telegram tarmoqlari uchun ishonchli va kafolatliy  TG profil xizmatlarini taklif etadi!
 💫Bizning botimizga obuna bo'ling va do'stlaringiz bilan baham ko'ring
-👇Davom etish uchun quyidagi tugmalardan birini tanlang</b>
+👇Davom etish uchun quyidagi buyruqlar birini tanlang</b>
+
+<blockquote expandable>/balance — <tg-emoji emoji-id='5976377521287990495'>💳</tg-emoji> Kabinetim
+/buy_number — <tg-emoji emoji-id='6037418554276452311'>📱</tg-emoji> Hisob olish
+/deposit — <tg-emoji emoji-id='5305525714374645893'>💰</tg-emoji> Pul kiritish
+/my_numbers — <tg-emoji emoji-id='5197269100878907942'>📋</tg-emoji> Nomerlarim ro'yxati
+/support — <tg-emoji emoji-id='5463289209005560690'>📞</tg-emoji> Qo'llab-quvvatlash
+/faq — <tg-emoji emoji-id='5226512880362332956'>📖</tg-emoji> Qo'llanma
+/dev — <tg-emoji emoji-id='5190458330719461749'>💻</tg-emoji>🧑‍💻 Dasturchi</blockquote>
 
 <b>👤ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')
 
@@ -36,7 +44,16 @@ async def bot_start(message: Message):
 
             await message.answer(f"""<b>👋 Assalomu alaykum xbomer.uz | foydalanuvchisi !
 
-🤖 Bizning nakrutka botimizga xush kelibsiz: 👇
-Ijtimoiy tarmoqlar</b> <i>( Telegram, Instagram, Tiktok va Youtube ) uchun obunachi, like, ko'rishlar hamda reaksiyalarni ko'paytirishingiz mumkin</i>
+<b>🚀 Ushbu bot sizga Telegram tarmoqlari uchun ishonchli va kafolatliy  TG profil xizmatlarini taklif etadi!
+💫Bizning botimizga obuna bo'ling va do'stlaringiz bilan baham ko'ring
+👇Davom etish uchun quyidagi buyruqlar birini tanlang</b>
+
+<blockquote expandable>/balance — <tg-emoji emoji-id='5976377521287990495'>💳</tg-emoji> Kabinetim
+/buy_number — <tg-emoji emoji-id='6037418554276452311'>📱</tg-emoji> Hisob olish
+/deposit — <tg-emoji emoji-id='5305525714374645893'>💰</tg-emoji> Pul kiritish
+/my_numbers — <tg-emoji emoji-id='5197269100878907942'>📋</tg-emoji> Nomerlarim ro'yxati
+/support — <tg-emoji emoji-id='5463289209005560690'>📞</tg-emoji> Qo'llab-quvvatlash
+/faq — <tg-emoji emoji-id='5226512880362332956'>📖</tg-emoji> Qo'llanma
+/dev — <tg-emoji emoji-id='5190458330719461749'>💻</tg-emoji>🧑‍💻 Dasturchi</blockquote>
 
 <b>👤ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')
