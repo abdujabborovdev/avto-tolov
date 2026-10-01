@@ -75,7 +75,7 @@ async def tolov_turi(call: CallbackQuery):
 
 @router.message((F.text == 'Pul kiritish') | (F.text == '/deposit'))
 async def menu(message: Message):
-    await message.answer("🗃<tg-emoji emoji-id='5314787416211481862'>🗃️</tg-emoji>  Kerakli to’lov tizimini tanlang:", reply_markup=tolov_tur)
+    await message.answer("<tg-emoji emoji-id='5314787416211481862'>🗃️</tg-emoji> Kerakli to’lov tizimini tanlang:", reply_markup=tolov_tur)
 
 
 @router.message((F.text == 'Nomerlarim') | (F.text == '/my_numbers'))

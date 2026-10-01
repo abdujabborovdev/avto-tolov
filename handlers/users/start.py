@@ -29,7 +29,7 @@ async def bot_start(message: Message):
 /faq — <tg-emoji emoji-id='5226512880362332956'>📖</tg-emoji> Qo'llanma
 /dev — <tg-emoji emoji-id='5190458330719461749'>💻</tg-emoji>🧑‍💻 Dasturchi</blockquote>
 
-<b><tg-emoji emoji-id='5256143829672672750'>👤</tg-emoji> ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')
+<tg-emoji emoji-id='5256143829672672750'>👤</tg-emoji> ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')
 
         else:
             if message.from_user.username:
@@ -48,4 +48,4 @@ async def bot_start(message: Message):
 /faq — <tg-emoji emoji-id='5226512880362332956'>📖</tg-emoji> Qo'llanma
 /dev — <tg-emoji emoji-id='5190458330719461749'>💻</tg-emoji>🧑‍💻 Dasturchi</blockquote>
 
-<b><tg-emoji emoji-id='5256143829672672750'>👤</tg-emoji> ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')
+<tg-emoji emoji-id='5256143829672672750'>👤</tg-emoji> ID raqam:</b> <code>{message.from_user.id}</code>""", reply_markup=menu, parse_mode='HTML')

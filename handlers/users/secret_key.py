@@ -37,13 +37,13 @@ async def create_key(call: CallbackQuery):
             keyboard = secret_key_inb()
             await call.message.edit_text(f"""<b>Muvafiyaqiyatlik kalit yaratildi <tg-emoji emoji-id='5370870691140737817'>🥳</tg-emoji>
 
-⚙<tg-emoji emoji-id='5974104203688152439'>⚙️</tg-emoji> Api dokument:
+<tg-emoji emoji-id='5974104203688152439'>⚙️</tg-emoji> Api dokument:
 <tg-emoji emoji-id='5974492756494519709'>🔗</tg-emoji> https://xbomer.uz/api/
 
-<b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Ilk Api xizmat:
+<tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Ilk Api xizmat:
 <tg-emoji emoji-id='5974492756494519709'>🔗</tg-emoji> https://xbomer.uz/api/v1
 
-<b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Sizning API kalitingiz: <code>{secret_key}</code>
+<tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Sizning API kalitingiz: <code>{secret_key}</code>
 <tg-emoji emoji-id='5264771190609682694'>💵</tg-emoji> Balansingiz:  {user_hisob} so'm </b>""", parse_mode="html", reply_markup=keyboard)
         else:
             try:
@@ -90,10 +90,10 @@ async def update_key(call: CallbackQuery):
 <tg-emoji emoji-id='5974104203688152439'>⚙️</tg-emoji> Api dokument:
 <tg-emoji emoji-id='5974492756494519709'>🔗</tg-emoji> https://xbomer.uz/api/
 
-<b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Ilk Api xizmat:
+<tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Ilk Api xizmat:
 <tg-emoji emoji-id='5974492756494519709'>🔗</tg-emoji> https://xbomer.uz/api/v1
 
-<b><tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Sizning API kalitingiz: <code>{secret_key}</code>
+<tg-emoji emoji-id='5773798959206108871'>🔑</tg-emoji> Sizning API kalitingiz: <code>{secret_key}</code>
 <tg-emoji emoji-id='5264771190609682694'>💵</tg-emoji> Balansingiz:  {user_hisob} so'm </b>""", parse_mode="html", reply_markup=keyboard)
 
         else:
