@@ -1,6 +1,6 @@
 
 from aiogram import Router, F
-
+import asyncio
 from data.config import *
 from keyboards.default.admin import admin_k
 from sqlalchemy import select, delete, func
@@ -59,19 +59,18 @@ async def yangilash(message: Message):
             }) as r:
                 dat = await r.json()
 
-        async with async_session() as session:
-            await session.execute(delete(Numbers_list))
-            await session.commit()
-            try:
-                for i in dat:
-                    price = i['price'] * 1.4
-                    new_number = Numbers_list(country=i['country'], price=price)
-                    session.add(new_number)
-                    await session.commit()
-                await message.answer(f"""Nomerlar royhati yangilandi""")
+        if not isinstance(dat, list) or not dat:
+            return await message.answer(f"API xato: {dat}")
 
-            except Exception as e:
-                await message.answer(f"""Xatolik - {e}""")
+        try:
+            rows = [Numbers_list(country=i['country'], price=float(i['price']) * 1.4) for i in dat]
+            async with async_session() as session:
+                await session.execute(delete(Numbers_list))
+                session.add_all(rows)
+                await session.commit()
+            await message.answer("Nomerlar royhati yangilandi")
+        except Exception as e:
+            await message.answer(f"Xatolik - {e}")
 
 
 @router.message(F.text == "Tolovlar tarixi")
@@ -197,11 +196,15 @@ async def foydalanuvchilar(message: Message):
             result = await session.execute(select(Numbers_list))
             royhat = result.scalars().all()
 
-        matn = f"<b>Ro'yxati:</b>\n\n"
-
+        matn = "<b>Ro'yxati:</b>\n\n"
         for u in royhat:
-            matn += f"ID: {u.id}| {u.country} | {u.price}\n"
-        await message.answer(matn, parse_mode='HTML')
+            qator = f"ID: {u.id}| {u.country} | {u.price}\n"
+            if len(matn) + len(qator) > 4000:
+                await message.answer(matn, parse_mode='HTML')
+                matn = ""
+            matn += qator
+        if matn:
+            await message.answer(matn, parse_mode='HTML')
 
 
 @router.message(F.text == 'Nomerlar tarixi')
@@ -275,10 +278,13 @@ async def foydalanuvchilar(message: Message, state: FSMContext):
 
 @router.message(Suma_qosh.tg_idsi)
 async def foydalanuvchilar(message: Message, state: FSMContext):
-    user_id = message.text
+    if not message.text.isdigit():
+        return await message.answer("❌ Faqat raqam kiriting")
+    user_id = int(message.text)
 
     async with async_session() as session:
         result = await session.execute(select(User).filter(User.id == user_id))
+
         useri = result.scalar_one_or_none()
 
     if useri:
@@ -313,13 +319,11 @@ async def foydalanuvchilar(message: Message, state: FSMContext):
             await state.clear()
             return
 
-        try:
-            current_hisob = int(user.hisob) if user.hisob is not None else 0
-        except (ValueError, TypeError):
-            current_hisob = 0
-
-        user.hisob = current_hisob + suma
+        await session.execute(
+            update(User).where(User.id == user_id).values(hisob=User.hisob + suma)
+        )
         await session.commit()
+        await session.refresh(user)
 
         if suma < 0:
             await message.answer(
@@ -366,6 +370,7 @@ async def send_message(message: Message, state: FSMContext):
         except Exception as e:
             blocked += 1
             print(f"{user_id}: {e}")
+        await asyncio.sleep(0.05)
 
     await state.clear()
 
