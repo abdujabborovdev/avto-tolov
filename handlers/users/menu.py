@@ -30,11 +30,11 @@ async def menu(message: Message):
     await message.answer(f"""<tg-emoji emoji-id='5104966345267610825'>📶</tg-emoji> <b>Tayyor Telegram akkauntlar</b> — bu oldindan ro‘yxatdan o‘tgan, ishlashga tayyor akkauntlar bo‘lib, sizga doimiy foydalanish uchun taqdim etiladi.
 
 <b><tg-emoji emoji-id='6041777576714702813'>📌</tg-emoji> Ishlash tartibi:</b>
-<tg-emoji emoji-id='5794164805065514131'>1⃣</tg-emoji> Bot sizga akkaunt raqamini beradi.  
+<tg-emoji emoji-id='5794164805065514131'>✅</tg-emoji> Bot sizga akkaunt raqamini beradi.  
 <tg-emoji emoji-id='5794085322400733645'>2️⃣ </tg-emoji> Shu raqam orqali Telegramga kirasiz (<b>Rasmiy ko‘k Telegram ilovasidan FOYDALANMANG, norasmiy ilovalardan foydalaning</b>).  
 <tg-emoji emoji-id='5104966345267610825'>3️⃣ </tg-emoji> Telegram kod so‘raganda “<b>📲SMS olish</b>” tugmasini bosing va kuting.  
-<tg-emoji emoji-id='5794241397217304511'>4⃣</tg-emoji> Sizga kirish kodi va 2 bosqichli parol taqdim etiladi.  
-<tg-emoji emoji-id='5793985348446984682'>5⃣</tg-emoji> Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.
+<tg-emoji emoji-id='5794241397217304511'>✅</tg-emoji> Sizga kirish kodi va 2 bosqichli parol taqdim etiladi.  
+<tg-emoji emoji-id='5793985348446984682'>✅</tg-emoji> Muammo bo‘lsa, menyudagi Support orqali yordamga murojaat qiling.
 
 
 <tg-emoji emoji-id='5427009714745517609'>✅</tg-emoji> Barcha ma’lumotlarni o‘qib chiqqan bo‘lsangiz, “Tushundim” tugmasini bosing.""", reply_markup=number_ols, parse_mode='HTML')
