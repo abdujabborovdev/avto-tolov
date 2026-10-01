@@ -318,19 +318,29 @@ async def add_balance_sum(message: Message, state: FSMContext):
     user_id = data.get("tg_idsi")
 
     try:
-        async with async_session() as session:
-            result = await session.execute(select(User).where(User.id == user_id))
-            user = result.scalar_one_or_none()
+        print("1) handler ishladi:", suma, user_id)
 
-            if user is None:
-                await state.clear()
-                return await message.answer("❌ Foydalanuvchi topilmadi!")
+        async def _update():
+            async with async_session() as session:
+                res = await session.execute(
+                    update(User)
+                    .where(User.id == user_id)
+                    .values(hisob=func.coalesce(User.hisob, 0) + suma)
+                    .returning(User.hisob)
+                )
+                row = res.first()
+                await session.commit()
+                return row
 
-            yangi = int(user.hisob or 0) + suma
-            user.hisob = str(yangi) if isinstance(user.hisob, str) else yangi
-            await session.commit()
+        row = await asyncio.wait_for(_update(), timeout=10)
+        print("2) baza yangilandi:", row)
 
-        # session yopilgandan keyin user.hisob ishlatilmaydi, yangi ishlatiladi
+        if row is None:
+            await state.clear()
+            return await message.answer("❌ Foydalanuvchi topilmadi!")
+
+        yangi = row[0]
+
         if suma < 0:
             matn = f"✅ Hisobdan <b>{abs(suma)}</b> so'm ayrildi.\n💳 Yangi balans: <b>{yangi}</b> so'm"
         else:
